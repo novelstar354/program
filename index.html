@@ -35,10 +35,11 @@
 
     <div class="toolbar">
 
-        <button id="newFileBtn">
-            新規
-        </button>
-
+        <div id="sidebar">
+    
+    <div id="fileList"></div>
+</div>
+<button onclick="createFile()">＋ New File</button>
         <button id="openFileBtn">
             開く
         </button>
@@ -54,9 +55,9 @@
         <button id="compileBtn">
             JS変換
         </button>
-        <button id="helpBtn">
-            使い方
-        </button>
+        <button id="helpBtn">使い方</button>
+
+
         <button id="themeBtn">
             🌙
         </button>
@@ -69,7 +70,7 @@
 <div id="workspace">
 
     <!-- サイドバー -->
-    <aside id="sidebar">
+    <aside id="fileSidebar">
 
         <div class="sidebar-header">
             EXPLORER
@@ -113,8 +114,6 @@ id="fileInput"
 accept=".star,.txt"
 style="display:none"
 />
-<!-- HELP PANEL -->
-
 <div id="helpPanel">
 
     <div id="helpHeader">
@@ -136,6 +135,13 @@ print "Hello"
 # 変数
 let name = "STar"
 
+
+#演算
+y = x + 2
+y = x - 3
+y = x * 4
+y = x / 5
+
 # 繰り返し
 repeat 5 {
     print name
@@ -155,6 +161,8 @@ func hello() {
 while hp > 0 {
     print hp
 }
+
+
 </pre>
 
     </div>
