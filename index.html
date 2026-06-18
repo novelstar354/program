@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>STar IDE Ultimate</title>
+
+<meta name="theme-color" content="#0f172a">
+
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+</head>
+
+<body>
+<div class="background-grid"></div>
+<!-- ローディング -->
+<div id="loadingScreen">
+    <div class="loader">
+        <div class="logo">⭐ STar IDE</div>
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<!-- ヘッダー -->
+<header id="topbar">
+
+    <div class="brand">
+        ⭐ STar IDE Ultimate
+    </div>
+
+    <div class="toolbar">
+
+        <button id="newFileBtn">
+            新規
+        </button>
+
+        <button id="openFileBtn">
+            開く
+        </button>
+
+        <button id="saveFileBtn">
+            保存
+        </button>
+
+        <button id="runBtn">
+            ▶ 実行
+        </button>
+
+        <button id="compileBtn">
+            JS変換
+        </button>
+        <button id="helpBtn">
+            使い方
+        </button>
+        <button id="themeBtn">
+            🌙
+        </button>
+
+    </div>
+
+</header>
+
+<!-- メイン -->
+<div id="workspace">
+
+    <!-- サイドバー -->
+    <aside id="sidebar">
+
+        <div class="sidebar-header">
+            EXPLORER
+        </div>
+
+        <div id="fileTree"></div>
+
+    </aside>
+
+    <!-- エディタ領域 -->
+    <section id="editorArea">
+
+        <!-- タブ -->
+        <div id="tabs"></div>
+
+        <!-- Monaco -->
+        <div id="editor"></div>
+
+    </section>
+
+</div>
+
+<!-- 下部パネル -->
+<div id="bottomPanel">
+
+    <div id="consoleHeader">
+        Console
+        <button id="clearConsoleBtn">
+            Clear
+        </button>
+    </div>
+
+    <pre id="console"></pre>
+
+</div>
+
+<!-- ファイル選択 -->
+<input
+type="file"
+id="fileInput"
+accept=".star,.txt"
+style="display:none"
+/>
+<!-- HELP PANEL -->
+
+<div id="helpPanel">
+
+    <div id="helpHeader">
+
+        <h2>⭐ STar Guide</h2>
+
+        <button id="closeHelp">
+            ✕
+        </button>
+
+    </div>
+
+    <div id="helpContent">
+
+<pre>
+# 出力
+print "Hello"
+
+# 変数
+let name = "STar"
+
+# 繰り返し
+repeat 5 {
+    print name
+}
+
+# 条件分岐
+if true {
+    print "YES"
+}
+
+# 関数
+func hello() {
+    print "Hello"
+}
+
+# while
+while hp > 0 {
+    print hp
+}
+</pre>
+
+    </div>
+
+</div>
+<!-- Monaco Loader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+
+<!-- STar -->
+<script src="star/lexer.js"></script>
+<script src="star/parser.js"></script>
+<script src="star/runtime.js"></script>
+<script src="star/compiler.js"></script>
+<script src="star/language.js"></script>
+
+<!-- IDE -->
+<script src="app.js"></script>
+
+</body>
+</html>
