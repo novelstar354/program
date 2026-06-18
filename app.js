@@ -7,7 +7,6 @@ let editor = null;
 
 
 
-
 /* =====================================================
 DOM
 ===================================================== */
@@ -414,100 +413,82 @@ STar Runtime
 
 function runSTar(code) {
 
-clearConsole();
+    clearConsole();
 
-const lines =
-    code.split("\n");
+    const lines = code.split("\n");
+    const vars = {};
 
-const vars = {};
+    for (let i = 0; i < lines.length; i++) {
 
-for (
-    let i = 0;
-    i < lines.length;
-    i++
-) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        if (line.startsWith("#")) continue;
 
-    let line =
-        lines[i].trim();
+        /* =========================
+           ① 変数宣言
+        ========================= */
+        if (line.startsWith("let ")) {
 
-    if (!line)
-        continue;
+            const parts = line.substring(4).split("=");
 
-    if (
-        line.startsWith("#")
-    )
-        continue;
+            const key = parts[0].trim();
+            let value = parts[1]?.trim();
 
-    if (
-        line.startsWith("let ")
-    ) {
+            if (value?.startsWith('"')) {
+                value = value.slice(1, -1);
+            }
 
-        const parts =
-            line
-                .substring(4)
-                .split("=");
-
-        const key =
-            parts[0].trim();
-
-        let value =
-            parts[1]?.trim();
-
-        if (
-            value?.startsWith('"')
-        ) {
-
-            value =
-                value.slice(
-                    1,
-                    -1
-                );
-
+            vars[key] = value;
         }
 
-        vars[key] = value;
+        /* =========================
+           ② 再代入（🔥追加）
+        ========================= */
+        else if (line.includes("=")) {
 
+    const parts = line.split("=");
+
+    const key = parts[0].trim();
+    let value = parts[1]?.trim();
+
+    if (value?.startsWith('"')) {
+        value = value.slice(1, -1);
+    } else {
+        value = evalExpr(value, vars);
     }
 
-    else if (
-        line.startsWith(
-            "print "
-        )
-    ) {
+    vars[key] = value;
+}
 
-        let value =
-            line
-                .substring(6)
-                .trim();
+        /* =========================
+           ③ print
+        ========================= */
+        else if (line.startsWith("print ")) {
 
-        if (
-            value.startsWith('"')
-        ) {
+            let value = line.substring(6).trim();
 
-            log(
-                value.slice(
-                    1,
-                    -1
-                )
-            );
-
+            if (value.startsWith('"')) {
+                log(value.slice(1, -1));
+            } else {
+                log(vars[value] ?? value);
+            }
         }
+    }
+}
+function evalExpr(expr, vars) {
 
-        else {
-
-            log(
-                vars[value]
-                    ?? value
-            );
-
-        }
-
+    // 変数を式に置換
+    for (const key in vars) {
+        const regex = new RegExp(`\\b${key}\\b`, "g");
+        expr = expr.replace(regex, vars[key]);
     }
 
+    try {
+        return Function("return " + expr)();
+    } catch (e) {
+        return expr;
+    }
 }
-
-}
-
 /* =====================================================
 COMPILE
 ===================================================== */
@@ -534,9 +515,21 @@ for (let line of lines) {
         }
     }
 
-    else if (line.startsWith("let ")) {
-        js += line + ";\n";
+    if (line.startsWith("let ")) {
+
+    const parts = line.substring(4).split("=");
+
+    const key = parts[0].trim();
+    let value = parts[1]?.trim();
+
+    if (value?.startsWith('"')) {
+        value = value.slice(1, -1);
+    } else {
+        value = evalExpr(value, vars);
     }
+
+    vars[key] = value;
+}
 }
 
 return js;
