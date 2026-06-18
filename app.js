@@ -1,16 +1,16 @@
 /* =====================================================
-   STar IDE Ultimate
-   app.js
-   ===================================================== */
+STar IDE Ultimate
+app.js
+===================================================== */
 
 let editor = null;
 
-const files = [];
-let activeFile = null;
+
+
 
 /* =====================================================
-   DOM
-   ===================================================== */
+DOM
+===================================================== */
 
 const fileTree = document.getElementById("fileTree");
 const tabs = document.getElementById("tabs");
@@ -26,337 +26,479 @@ const clearBtn = document.getElementById("clearConsoleBtn");
 const themeBtn = document.getElementById("themeBtn");
 
 /* =====================================================
-   LOG
-   ===================================================== */
+LOG
+===================================================== */
 
 function log(text) {
-    consoleEl.textContent += text + "\n";
-    consoleEl.scrollTop = consoleEl.scrollHeight;
+consoleEl.textContent += text + "\n";
+consoleEl.scrollTop = consoleEl.scrollHeight;
 }
 
 function clearConsole() {
-    consoleEl.textContent = "";
+consoleEl.textContent = "";
 }
+function waitEditorReady() {
+    const timer = setInterval(() => {
+        if (editor) {
+            clearInterval(timer);
 
+            editor.onDidChangeModelContent(() => {
+                clearTimeout(saveTimer);
+
+                saveTimer = setTimeout(() => {
+                    saveCurrentFile();
+                    saveFiles();
+                }, 500);
+            });
+        }
+    }, 50);
+}
 /* =====================================================
-   LOADING
-   ===================================================== */
+LOADING
+===================================================== */
 
 window.addEventListener("load", () => {
 
-    initMonaco();
+initMonaco();
+waitEditorReady();
+setTimeout(() => {
 
-    setTimeout(() => {
+    const loading =
+        document.getElementById("loadingScreen");
 
-        const loading =
-            document.getElementById("loadingScreen");
+    if (loading)
+        loading.remove();
 
-        if (loading)
-            loading.remove();
-
-    }, 500);
+}, 500);
 
 });
 
 /* =====================================================
-   MONACO
-   ===================================================== */
+MONACO
+===================================================== */
+function initHelp() {
+    const helpBtn = document.getElementById("helpBtn");
+    const helpPanel = document.getElementById("helpPanel");
+    const closeHelp = document.getElementById("closeHelp");
 
-function initMonaco() {
+    if (!helpBtn || !helpPanel || !closeHelp) {
+        console.warn("help UI not found");
+        return;
+    }
 
-    require.config({
-        paths: {
-            vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
-        }
+    helpBtn.addEventListener("click", () => {
+        helpPanel.classList.add("open");
     });
 
-    require(["vs/editor/editor.main"], () => {
+    closeHelp.addEventListener("click", () => {
+        helpPanel.classList.remove("open");
+    });
+}
 
-        editor = monaco.editor.create(
-            document.getElementById("editor"),
-            {
-                value:
+window.addEventListener("load", initHelp);
+
+window.addEventListener("load", initHelp);
+function initMonaco() {
+
+require.config({
+    paths: {
+        vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs"
+    }
+});
+
+require(["vs/editor/editor.main"], () => {
+
+    editor = monaco.editor.create(
+        document.getElementById("editor"),
+        {
+            value:
 `print "Hello STar"
 
 let name = "World"
 
 print name`,
-                language: "javascript",
-                theme: "vs-dark",
-                automaticLayout: true,
-                fontSize: 15,
-                minimap: {
-                    enabled: true
-                }
-            }
-        );
+            language: "javascript",
+            theme: "vs-dark",
+            automaticLayout: true,
+            fontSize: 15,
+            minimap: { enabled: true }
+        }
+    );
 
-        createNewFile();
-
-    });
+    attachEditorEvents(); // ← これだけ
+});
 
 }
+function initFiles() {
+const saved = JSON.parse(localStorage.getItem("star_files") || "[]");
 
-/* =====================================================
-   FILE
-   ===================================================== */
+files = saved;
 
-function createNewFile() {
-
-    const file = {
+if (files.length === 0) {
+    files = [{
         id: crypto.randomUUID(),
         name: "main.star",
         content: ""
-    };
+    }];
+}
 
-    files.push(file);
+activeFile = files[0];
 
-    activeFile = file;
+}
+/* =====================================================
+FILE
+===================================================== */
 
-    renderTabs();
-    renderTree();
+function createNewFile() {
+
+const file = {
+    id: crypto.randomUUID(),
+    name: "main.star",
+    content: ""
+};
+
+files.push(file);
+
+activeFile = file;
+
+renderTabs();
+renderTree();
 
 }
 
 function renderTabs() {
+tabs.innerHTML = "";
 
-    tabs.innerHTML = "";
+files.forEach(file => {
+    const tab = document.createElement("div");
 
-    files.forEach(file => {
+    tab.className =
+        "tab" + (activeFile?.id === file.id ? " active" : "");
 
-        const tab =
-            document.createElement("div");
+    // ファイル名
+    const name = document.createElement("span");
+    name.textContent = file.name;
+    name.onclick = () => openFile(file.id);
 
-        tab.className =
-            "tab" +
-            (activeFile?.id === file.id
-                ? " active"
-                : "");
+    // ×ボタン
+    const close = document.createElement("span");
+    close.textContent = " ×";
+    close.style.marginLeft = "8px";
+    close.style.cursor = "pointer";
+    close.style.color = "#aaa";
 
-        tab.textContent = file.name;
+    close.onclick = (e) => {
+        e.stopPropagation();
+        closeFile(file.id);
+    };
 
-        tab.onclick = () => {
+    tab.appendChild(name);
+    tab.appendChild(close);
 
-            saveCurrentFile();
+    tabs.appendChild(tab);
+});
 
-            activeFile = file;
+}
+function closeFile(id) {
+if (files.length <= 1) {
+alert("最後のファイルは閉じられません");
+return;
+}
 
-            editor.setValue(
-                file.content
-            );
+const index = files.findIndex(f => f.id === id);
+if (index === -1) return;
 
-            renderTabs();
+const isActive = activeFile?.id === id;
 
-        };
+// ファイル削除（閉じる＝非表示扱い）
+files.splice(index, 1);
 
-        tabs.appendChild(tab);
+// アクティブ調整
+if (isActive) {
+    const newIndex = Math.max(0, index - 1);
+    activeFile = files[newIndex] || files[0];
+    editor.setValue(activeFile?.content || "");
+}
 
-    });
+saveFiles();
+renderTabs();
+renderTree();
 
 }
 
-function renderTree() {
 
-    fileTree.innerHTML = "";
 
-    files.forEach(file => {
 
-        const item =
-            document.createElement("div");
+/* =====================================================
+FILE SYSTEM (STar IDE)
+===================================================== */
+let files = JSON.parse(localStorage.getItem("star_files") || "[]");
+let activeFile = null;
 
-        item.className = "file";
+/* 保存 */
+function saveFiles() {
+localStorage.setItem("star_files", JSON.stringify(files));
+}
 
-        item.textContent = file.name;
+/* 新規作成 */
+function createFile(name = "untitled.star") {
+const file = {
+id: crypto.randomUUID(),
+name,
+content: ""
+};
 
-        item.onclick = () => {
+files.push(file);
+activeFile = file;
 
-            saveCurrentFile();
+editor.setValue("");
 
-            activeFile = file;
+saveFiles();
+renderTabs();
+renderTree();
 
-            editor.setValue(
-                file.content
-            );
+}
 
-            renderTabs();
+/* 開く */
+function openFile(id) {
+const file = files.find(f => f.id === id);
+if (!file) return;
 
-        };
+saveCurrentFile();
 
-        fileTree.appendChild(item);
+activeFile = file;
+editor.setValue(file.content);
 
-    });
+renderTabs();
+renderTree();
 
 }
 
 function saveCurrentFile() {
+if (!activeFile || !editor) return;
 
-    if (!activeFile || !editor)
-        return;
+// エディタ内容を現在のファイルへ保存
+activeFile.content = editor.getValue();
 
-    activeFile.content =
-        editor.getValue();
+// files全体を更新（重要）
+const index = files.findIndex(f => f.id === activeFile.id);
+if (index !== -1) {
+    files[index] = activeFile;
+}
+
+// localStorageへ保存
+localStorage.setItem("star_files", JSON.stringify(files));
+
+}
+/* 名前変更 */
+function renameFile(id, newName) {
+const file = files.find(f => f.id === id);
+if (!file) return;
+
+file.name = newName;
+
+saveFiles();
+renderTabs();
+renderTree();
 
 }
 
+/* 削除 */
+function deleteFile(id) {
+files = files.filter(f => f.id !== id);
+
+if (activeFile?.id === id) {
+    activeFile = files[0] || null;
+    editor.setValue(activeFile?.content || "");
+}
+
+saveFiles();
+renderTabs();
+renderTree();
+
+}
+
+
+
+
+/* Tree */
+function renderTree() {
+fileTree.innerHTML = "";
+
+files.forEach(file => {
+    const item = document.createElement("div");
+
+    item.className = "file";
+    item.textContent = file.name;
+
+    item.onclick = () => openFile(file.id);
+
+    item.oncontextmenu = (e) => {
+        e.preventDefault();
+
+        const action = prompt("rename / delete");
+
+        if (action === "rename") {
+            const name = prompt("new name");
+            if (name) renameFile(file.id, name);
+        }
+
+        if (action === "delete") {
+            deleteFile(file.id);
+        }
+    };
+
+    fileTree.appendChild(item);
+});
+
+}
+
+let saveTimer;
+
+function attachEditorEvents() {
+    if (!editor) return;
+
+    editor.onDidChangeModelContent(() => {
+        clearTimeout(saveTimer);
+
+        saveTimer = setTimeout(() => {
+            saveCurrentFile();
+            saveFiles();
+        }, 500);
+    });
+}
+    
+
+/* 初期化 */
+window.addEventListener("load", () => {
+renderTabs();
+initFiles();
+renderTree();
+});
 /* =====================================================
-   SAVE
-   ===================================================== */
+SAVE
+===================================================== */
 
 function saveFile() {
 
-    saveCurrentFile();
+saveCurrentFile();
 
-    const blob =
-        new Blob(
-            [activeFile.content],
-            {
-                type:
-                    "text/plain"
-            }
-        );
+const blob =
+    new Blob(
+        [activeFile.content],
+        {
+            type:
+                "text/plain"
+        }
+    );
 
-    const a =
-        document.createElement("a");
+const a =
+    document.createElement("a");
 
-    a.href =
-        URL.createObjectURL(blob);
+a.href =
+    URL.createObjectURL(blob);
 
-    a.download =
-        activeFile.name;
+a.download =
+    activeFile.name;
 
-    a.click();
-}
-
-/* =====================================================
-   OPEN
-   ===================================================== */
-
-function openFile(file) {
-
-    const reader =
-        new FileReader();
-
-    reader.onload = e => {
-
-        const newFile = {
-
-            id: crypto.randomUUID(),
-
-            name: file.name,
-
-            content:
-                e.target.result
-        };
-
-        files.push(newFile);
-
-        activeFile = newFile;
-
-        editor.setValue(
-            newFile.content
-        );
-
-        renderTabs();
-        renderTree();
-    };
-
-    reader.readAsText(file);
+a.click();
 
 }
 
+
+
+
 /* =====================================================
-   STar Runtime
-   ===================================================== */
+STar Runtime
+===================================================== */
 
 function runSTar(code) {
 
-    clearConsole();
+clearConsole();
 
-    const lines =
-        code.split("\n");
+const lines =
+    code.split("\n");
 
-    const vars = {};
+const vars = {};
 
-    for (
-        let i = 0;
-        i < lines.length;
-        i++
+for (
+    let i = 0;
+    i < lines.length;
+    i++
+) {
+
+    let line =
+        lines[i].trim();
+
+    if (!line)
+        continue;
+
+    if (
+        line.startsWith("#")
+    )
+        continue;
+
+    if (
+        line.startsWith("let ")
     ) {
 
-        let line =
-            lines[i].trim();
+        const parts =
+            line
+                .substring(4)
+                .split("=");
 
-        if (!line)
-            continue;
+        const key =
+            parts[0].trim();
+
+        let value =
+            parts[1]?.trim();
 
         if (
-            line.startsWith("#")
-        )
-            continue;
-
-        if (
-            line.startsWith("let ")
+            value?.startsWith('"')
         ) {
 
-            const parts =
-                line
-                    .substring(4)
-                    .split("=");
-
-            const key =
-                parts[0].trim();
-
-            let value =
-                parts[1]?.trim();
-
-            if (
-                value?.startsWith('"')
-            ) {
-
-                value =
-                    value.slice(
-                        1,
-                        -1
-                    );
-
-            }
-
-            vars[key] = value;
+            value =
+                value.slice(
+                    1,
+                    -1
+                );
 
         }
 
-        else if (
-            line.startsWith(
-                "print "
-            )
+        vars[key] = value;
+
+    }
+
+    else if (
+        line.startsWith(
+            "print "
+        )
+    ) {
+
+        let value =
+            line
+                .substring(6)
+                .trim();
+
+        if (
+            value.startsWith('"')
         ) {
 
-            let value =
-                line
-                    .substring(6)
-                    .trim();
+            log(
+                value.slice(
+                    1,
+                    -1
+                )
+            );
 
-            if (
-                value.startsWith('"')
-            ) {
+        }
 
-                log(
-                    value.slice(
-                        1,
-                        -1
-                    )
-                );
+        else {
 
-            }
-
-            else {
-
-                log(
-                    vars[value]
-                        ?? value
-                );
-
-            }
+            log(
+                vars[value]
+                    ?? value
+            );
 
         }
 
@@ -364,163 +506,213 @@ function runSTar(code) {
 
 }
 
+}
+
 /* =====================================================
-   COMPILE
-   ===================================================== */
+COMPILE
+===================================================== */
 
 function compileToJS(code) {
 
-    let js = code;
+let js = "";
 
-    js = js.replaceAll(
-        /print\s+"([^"]+)"/g,
-        'console.log("$1")'
-    );
+const lines = code.split("\n");
 
-    js = js.replaceAll(
-        /let\s+/g,
-        "let "
-    );
+for (let line of lines) {
 
-    return js;
+    line = line.trim();
+    if (!line) continue;
+
+    if (line.startsWith("print ")) {
+
+        const value = line.slice(6).trim();
+
+        if (value.startsWith('"')) {
+            js += `console.log(${value});\n`;
+        } else {
+            js += `console.log(${value});\n`;
+        }
+    }
+
+    else if (line.startsWith("let ")) {
+        js += line + ";\n";
+    }
+}
+
+return js;
 
 }
 
 /* =====================================================
-   EVENTS
-   ===================================================== */
+EVENTS
+===================================================== */
 
 runBtn.onclick = () => {
 
-    saveCurrentFile();
+saveCurrentFile();
 
-    runSTar(
-        editor.getValue()
-    );
+runSTar(
+    editor.getValue()
+);
 
 };
 
 saveBtn.onclick = saveFile;
 
 openBtn.onclick = () => {
-    fileInput.click();
+fileInput.click();
 };
 
 newBtn.onclick = () => {
 
-    saveCurrentFile();
+saveCurrentFile();
 
-    const name =
-        prompt(
-            "ファイル名"
-        ) || "new.star";
+const name =
+    prompt(
+        "ファイル名"
+    ) || "new.star";
 
-    const file = {
+const file = {
 
-        id:
-            crypto.randomUUID(),
+    id:
+        crypto.randomUUID(),
 
-        name,
+    name,
 
-        content: ""
-    };
+    content: ""
+};
 
-    files.push(file);
+files.push(file);
 
-    activeFile = file;
+activeFile = file;
 
-    editor.setValue("");
+editor.setValue("");
 
-    renderTabs();
-    renderTree();
+renderTabs();
+renderTree();
 
 };
 
 clearBtn.onclick =
-    clearConsole;
+clearConsole;
 
-fileInput.addEventListener(
-    "change",
-    e => {
+fileInput.addEventListener("change", e => {
+const file = e.target.files[0];
+if (!file) return;
 
-        const file =
-            e.target.files[0];
+const reader = new FileReader();
 
-        if (file)
-            openFile(file);
+reader.onload = () => {
+    const newFile = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        content: reader.result
+    };
 
-    }
-);
+    files.push(newFile);
+    activeFile = newFile;
+
+    editor.setValue(newFile.content);
+
+    saveFiles();
+    renderTabs();
+    renderTree();
+};
+
+reader.readAsText(file);
+
+});
 
 themeBtn.onclick = () => {
 
-    document.body
-        .classList
-        .toggle("light");
+document.body
+    .classList
+    .toggle("light");
 
-    monaco.editor
-        .setTheme(
-            document.body
-                .classList
-                .contains("light")
-                ? "vs"
-                : "vs-dark"
-        );
+monaco.editor
+    .setTheme(
+        document.body
+            .classList
+            .contains("light")
+            ? "vs"
+            : "vs-dark"
+    );
 
 };
 
 /* =====================================================
-   CTRL+S
-   ===================================================== */
+CTRL+S
+===================================================== */
+window.addEventListener("load", () => {
+    const helpBtn = document.getElementById("helpBtn");
+    const helpPanel = document.getElementById("helpPanel");
+    const closeHelp = document.getElementById("closeHelp");
 
+    if (!helpBtn || !helpPanel || !closeHelp) return;
+
+    helpBtn.onclick = () => {
+        helpPanel.classList.add("open");
+    };
+
+    closeHelp.onclick = () => {
+        helpPanel.classList.remove("open");
+    };
+});
 window.addEventListener(
-    "keydown",
-    e => {
+"keydown",
+e => {
 
-        if (
-            e.ctrlKey &&
-            e.key === "s"
-        ) {
+    if (
+        e.ctrlKey &&
+        e.key === "s"
+    ) {
 
-            e.preventDefault();
+        e.preventDefault();
 
-            saveFile();
-
-        }
+        saveFile();
 
     }
+
+}
+
 );
 /* =====================================================
-   HELP
-   ===================================================== */
+HELP
+===================================================== */
 
-const helpBtn =
-    document.getElementById(
-        "helpBtn"
-    );
+/*const helpBtn =
+document.getElementById(
+"helpBtn"
+);
 
 const helpPanel =
-    document.getElementById(
-        "helpPanel"
-    );
+document.getElementById(
+"helpPanel"
+);
 
 const closeHelp =
-    document.getElementById(
-        "closeHelp"
-    );
+document.getElementById(
+"closeHelp"
+);
 
 helpBtn.onclick = () => {
 
-    helpPanel.classList.add(
-        "open"
-    );
+helpPanel.classList.add(
+    "open"
+);
 
 };
 
 closeHelp.onclick = () => {
 
-    helpPanel.classList.remove(
-        "open"
-    );
+helpPanel.classList.remove(
+    "open"
+);
 
 };
+*/
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        document.getElementById("helpPanel")?.classList.remove("open");
+    }
+});
