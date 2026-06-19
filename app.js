@@ -26,7 +26,65 @@ const openBtn = document.getElementById("openFileBtn");
 const newBtn = document.getElementById("newFileBtn");
 const clearBtn = document.getElementById("clearConsoleBtn");
 const themeBtn = document.getElementById("themeBtn");
+/* =====================================================
+SEARCH
+===================================================== */
+const helpSearch =
+    document.getElementById("helpSearch");
 
+const helpContent =
+    document.querySelector(
+        "#helpContent pre"
+    );
+
+const originalText =
+    helpContent.textContent;
+
+helpSearch.addEventListener(
+    "input",
+    () => {
+
+        const keyword =
+            helpSearch.value.trim();
+
+        if (!keyword) {
+
+            helpContent.textContent =
+                originalText;
+
+            return;
+        }
+
+        const lines =
+            originalText.split("\n");
+
+        helpContent.innerHTML =
+            lines.map(line => {
+
+                if (
+                    line
+                    .toLowerCase()
+                    .includes(
+                        keyword.toLowerCase()
+                    )
+                ) {
+
+                    return `<span class="searchHit">${escapeHtml(line)}</span>`;
+                }
+
+                return escapeHtml(line);
+
+            }).join("<br>");
+    }
+);
+
+function escapeHtml(text) {
+
+    return text
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+}
 /* =====================================================
 LOG
 ===================================================== */
@@ -95,11 +153,52 @@ function initHelp() {
     closeHelp.addEventListener("click", () => {
         helpPanel.classList.remove("open");
     });
+    const helpSearch =
+    document.getElementById("helpSearch");
+
+const helpContent =
+    document.querySelector(
+        "#helpContent pre"
+    );
+
+if (helpSearch && helpContent) {
+
+    helpSearch.addEventListener("input", () => {
+
+        const keyword =
+            helpSearch.value.trim().toLowerCase();
+
+        if (!keyword) {
+            helpContent.innerHTML =
+                escapeHtml(originalText)
+                    .replace(/\n/g, "<br>");
+            return;
+        }
+
+        const lines =
+            originalText.split("\n");
+
+        helpContent.innerHTML =
+            lines.map(line => {
+
+                if (
+                    line.toLowerCase()
+                        .includes(keyword)
+                ) {
+                    return `<span class="searchHit">${
+                        escapeHtml(line)
+                    }</span>`;
+                }
+
+                return escapeHtml(line);
+
+            }).join("<br>");
+    });
+}
 }
 
 window.addEventListener("load", initHelp);
 
-window.addEventListener("load", initHelp);
 function initMonaco() {
 
 require.config({
