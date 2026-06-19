@@ -40,7 +40,7 @@
     <div id="fileList"></div>
 </div>
 <button onclick="createFile()">＋ New File</button>
-        <button id="openFileBtn">
+        <button id="newFileBtn">
             開く
         </button>
 
@@ -121,8 +121,28 @@ style="display:none"
     </div>
 
     <div id="helpContent">
-
+<input
+    type="text"
+    id="helpSearch"
+    placeholder="ヘルプを検索..."
+>
 <pre>
+STar Language v1.1.4
+
+対応機能
+・変数
+・定数
+・配列
+・関数
+・条件分岐
+・ループ
+・入力
+・ランダム
+・時間
+・キー入力
+・マウス入力
+
+
 # 出力
 print "Hello"
 
@@ -184,6 +204,7 @@ x <= y xがy以下
 
 #
 論理演算
+AND a<0 && b<0
 OR a <0 || b <  0
 NOT !(a > 0)
 
@@ -192,7 +213,7 @@ if key("a"){
     print "a"
 }
 (スペースは空白、エンターはEnter、矢印はArrowLeft,ArrowRight)
-
+<!--
 #マウス入力
 print mouseX()
 print mouseY()
@@ -200,7 +221,7 @@ print mouseY()
 #左クリック
 if mouseDown(){
     print "click"
-}
+}-->
 
 # 繰り返し
 repeat 5{
@@ -227,12 +248,15 @@ switch level {
     case 1:
         print "Beginner"
         break
+    
     case 2:
         print "Normal"
         break
+    
     case 3:
         print "Hard"
         break
+    
     default:
         print "Error"
 }
@@ -242,8 +266,14 @@ func hello() {
     print "Hello"
 }
 
+#return
+func ad(a,b){
+    return a + b
+}
+let result = call add(10,200)
+
 #関数実行
-call hello
+call hello()
 
 #引数付き関数
 func hello(name){
@@ -254,7 +284,7 @@ func hello(name){
 call hello("STar")
 
 #複数引数
-func hello(a,d){
+func hello(a,b){
     print a + b
 }
 
