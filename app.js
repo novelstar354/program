@@ -7,7 +7,9 @@ let editor = null;
 
 const functions = {};
 const consts = {};
-
+const keys = {};
+let mouseX = 0;
+let mouseY = 0;
 /* =====================================================
 DOM
 ===================================================== */
@@ -412,7 +414,7 @@ a.click();
 STar Runtime
 ===================================================== */
 
-function runSTar(code, vars = {}) {
+async function runSTar(code, vars = {}) {
 
     const lines = code.split("\n");
 
@@ -484,6 +486,26 @@ if (line === "break") {
             consts[key] = value;
             continue;
         }
+        if (line.startsWith("wait ")) {
+
+    const ms =
+        Number(
+            evalExpr(
+                line.substring(5),
+                vars
+            )
+        );
+
+    await new Promise(
+        r =>
+            setTimeout(
+                r,
+                ms
+            )
+    );
+
+    continue;
+}
 /* =========================
    func
 ========================= */
@@ -953,6 +975,50 @@ if (
             vars[key] = value;
             continue;
         }
+        if (line.endsWith(".push()")) {
+
+    const match =
+        line.match(
+            /^([a-zA-Z_][a-zA-Z0-9_]*)\.push\((.+)\)$/
+        );
+
+    if (match) {
+
+        const arr =
+            vars[match[1]];
+
+        if (Array.isArray(arr)) {
+
+            arr.push(
+                evalExpr(
+                    match[2],
+                    vars
+                )
+            );
+        }
+    }
+
+    continue;
+}
+if (line.endsWith(".pop()")) {
+
+    const match =
+        line.match(
+            /^([a-zA-Z_][a-zA-Z0-9_]*)\.pop\(\)$/
+        );
+
+    if (match) {
+
+        const arr =
+            vars[match[1]];
+
+        if (Array.isArray(arr)) {
+            arr.pop();
+        }
+    }
+
+    continue;
+}
 /* =========================
    call
 ========================= */
@@ -1246,23 +1312,143 @@ if (arrayAssign) {
 
 function evalExpr(expr, vars) {
 
-    expr = expr.trim();
+    if (
+        expr === undefined ||
+        expr === null
+    ) {
+        return "";
+    }
+
+    expr = String(expr).trim();
+
+    /* =========================
+       length
+    ========================= */
+
+    expr = expr.replace(
+        /([a-zA-Z_][a-zA-Z0-9_]*)\.length/g,
+        (_, name) =>
+            vars[name]?.length ?? 0
+    );
+
+    /* =========================
+       upper()
+    ========================= */
+
+    expr = expr.replace(
+        /([a-zA-Z_][a-zA-Z0-9_]*)\.upper\(\)/g,
+        (_, name) =>
+            JSON.stringify(
+                String(
+                    vars[name] ?? ""
+                ).toUpperCase()
+            )
+    );
+
+    /* =========================
+       lower()
+    ========================= */
+
+    expr = expr.replace(
+        /([a-zA-Z_][a-zA-Z0-9_]*)\.lower\(\)/g,
+        (_, name) =>
+            JSON.stringify(
+                String(
+                    vars[name] ?? ""
+                ).toLowerCase()
+            )
+    );
+
+    /* =========================
+       random(min,max)
+    ========================= */
+
+    expr = expr.replace(
+        /random\((.+?),(.+?)\)/g,
+        (_, min, max) => {
+
+            min = Number(
+                evalExpr(
+                    min,
+                    vars
+                )
+            );
+
+            max = Number(
+                evalExpr(
+                    max,
+                    vars
+                )
+            );
+
+            return Math.floor(
+                Math.random() *
+                (max - min + 1)
+            ) + min;
+        }
+    );
+
+    /* =========================
+       key("x")
+    ========================= */
+
+    expr = expr.replace(
+        /key\("(.+?)"\)/g,
+        (_, keyName) =>
+            keys[keyName] === true
+    );
+
+    /* =========================
+       mouse
+    ========================= */
+
+    expr = expr.replace(
+        /\bmouseX\b/g,
+        mouseX
+    );
+
+    expr = expr.replace(
+        /\bmouseY\b/g,
+        mouseY
+    );
+
+    /* =========================
+       const
+    ========================= */
 
     for (const key in consts) {
 
         expr = expr.replace(
-            new RegExp(`\\b${key}\\b`, "g"),
-            JSON.stringify(consts[key])
+            new RegExp(
+                `\\b${key}\\b`,
+                "g"
+            ),
+            JSON.stringify(
+                consts[key]
+            )
         );
     }
+
+    /* =========================
+       vars
+    ========================= */
 
     for (const key in vars) {
 
         expr = expr.replace(
-            new RegExp(`\\b${key}\\b`, "g"),
-            JSON.stringify(vars[key])
+            new RegExp(
+                `\\b${key}\\b`,
+                "g"
+            ),
+            JSON.stringify(
+                vars[key]
+            )
         );
     }
+
+    /* =========================
+       実行
+    ========================= */
 
     try {
 
@@ -1330,6 +1516,7 @@ for (let line of lines) {
 
     vars[key] = value;
 }
+    
 }
 
 return js;
@@ -1514,3 +1701,29 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("helpPanel")?.classList.remove("open");
     }
 });
+document.addEventListener(
+    "keydown",
+    e => {
+
+        keys[e.key] = true;
+
+    }
+);
+
+document.addEventListener(
+    "keyup",
+    e => {
+
+        keys[e.key] = false;
+
+    }
+);
+document.addEventListener(
+    "mousemove",
+    e => {
+
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+    }
+);
