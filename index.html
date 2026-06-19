@@ -146,6 +146,13 @@ let title = first + " " + last
 let score = 100
 print "Score: " + score
 
+#ランダム
+let dice = random(1,6)
+print dice
+
+#ミリ秒取得
+let start = time()
+
 #配列
 let nums = [1,2,3]
 
@@ -154,6 +161,11 @@ print nums[0]
 
 #配列要素変更
 nums[1] = 100
+
+#配列ランダム
+let items = ["sword","shield","potion"]
+let id = random(0,2)
+print items[id]
 
 #演算
 y = 5 + 2
@@ -175,6 +187,20 @@ x <= y xがy以下
 OR a <0 || b <  0
 NOT !(a > 0)
 
+#キー入力
+if key("a"){
+    print "a"
+}
+(スペースは空白、エンターはEnter、矢印はArrowLeft,ArrowRight)
+
+#マウス入力
+print mouseX()
+print mouseY()
+
+#左クリック
+if mouseDown(){
+    print "click"
+}
 
 # 繰り返し
 repeat 5{
