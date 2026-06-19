@@ -455,7 +455,15 @@ function runSTar(code, vars = {}) {
 
         if (!line) continue;
         if (line.startsWith("#")) continue;
+/* =========================
+   break
+========================= */
+if (line === "break") {
 
+    vars.__break__ = true;
+
+    return vars;
+}
         /* =========================
            con
         ========================= */
@@ -538,72 +546,125 @@ if (line.startsWith("func ")) {
         ========================= */
         if (line.startsWith("repeat ")) {
 
-            const match =
-                line.match(/^repeat\s+(.+?)\s*\{$/);
+    const match =
+        line.match(
+            /^repeat\s+(.+?)\s*\{$/
+        );
 
-            if (!match) {
-                log("Syntax Error: repeat");
-                continue;
-            }
+    if (!match) {
+        log("Syntax Error: repeat");
+        continue;
+    }
 
-            const count =
-                Number(
-                    evalExpr(match[1], vars)
-                );
+    const count =
+        Number(
+            evalExpr(
+                match[1],
+                vars
+            )
+        );
 
-            const result =
-                getBlock(i + 1);
+    const result =
+        getBlock(i + 1);
 
-            for (let r = 0; r < count; r++) {
+    for (
+        let r = 0;
+        r < count;
+        r++
+    ) {
 
-                vars.count = r + 1;
+        vars.count = r + 1;
 
-                runSTar(
-                    result.block,
-                    vars
-                );
-            }
+        const loopResult =
+            runSTar(
+                result.block,
+                vars
+            );
 
-            i = result.end;
+        if (
+            loopResult.__continue__
+        ) {
+
+            delete vars.__continue__;
             continue;
         }
+
+        if (
+            loopResult.__break__
+        ) {
+
+            delete vars.__break__;
+            break;
+        }
+    }
+
+    i = result.end;
+    continue;
+}
 
         /* =========================
            while
         ========================= */
         if (line.startsWith("while ")) {
 
-            const match =
-                line.match(/^while\s+(.+?)\s*\{$/);
+    const match =
+        line.match(
+            /^while\s+(.+?)\s*\{$/
+        );
 
-            if (!match) {
-                log("Syntax Error: while");
-                continue;
-            }
+    if (!match) {
+        log("Syntax Error: while");
+        continue;
+    }
 
-            const condition =
-                match[1];
+    const condition =
+        match[1];
 
-            const result =
-                getBlock(i + 1);
+    const result =
+        getBlock(i + 1);
 
-            while (
-                evalExpr(
-                    condition,
-                    vars
-                )
-            ) {
+    while (
+        evalExpr(
+            condition,
+            vars
+        )
+    ) {
 
-                runSTar(
-                    result.block,
-                    vars
-                );
-            }
+        const loopResult =
+            runSTar(
+                result.block,
+                vars
+            );
 
-            i = result.end;
+        if (
+            loopResult.__continue__
+        ) {
+
+            delete vars.__continue__;
             continue;
         }
 
+        if (
+            loopResult.__break__
+        ) {
+
+            delete vars.__break__;
+            break;
+        }
+    }
+
+    i = result.end;
+    continue;
+}
+/* =========================
+   continue
+========================= */
+if (line === "continue") {
+
+    vars.__continue__ = true;
+
+    return vars;
+}
         /* =========================
            if / eif / else
         ========================= */
@@ -1008,7 +1069,137 @@ if (line.startsWith("return ")) {
 
             continue;
         }
+if (line.startsWith("switch ")) {
 
+    const match =
+        line.match(
+            /^switch\s+(.+?)\s*\{$/
+        );
+
+    if (!match) {
+
+        log("Syntax Error: switch");
+        continue;
+    }
+
+    const switchValue =
+        evalExpr(
+            match[1],
+            vars
+        );
+
+    const result =
+        getBlock(i + 1);
+
+    const blockLines =
+        result.block.split("\n");
+
+    let executing = false;
+    let found = false;
+
+    for (
+        let j = 0;
+        j < blockLines.length;
+        j++
+    ) {
+
+        const current =
+            blockLines[j].trim();
+
+        if (
+            current.startsWith("case ")
+        ) {
+
+            const caseValue =
+                current
+                    .replace("case","")
+                    .replace(":","")
+                    .trim();
+
+            executing =
+                switchValue ==
+                evalExpr(
+                    caseValue,
+                    vars
+                );
+
+            if (executing)
+                found = true;
+
+            continue;
+        }
+
+        if (
+            current === "default:"
+        ) {
+
+            executing =
+                !found;
+
+            continue;
+        }
+
+        if (
+            current === "break"
+        ) {
+
+            if (executing)
+                break;
+
+            continue;
+        }
+
+        if (executing) {
+
+            runSTar(
+                current,
+                vars
+            );
+        }
+    }
+
+    i = result.end;
+    continue;
+}
+/*===============================================
+    配列再代入
+  ===============================================*/
+const arrayAssign =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\[(.+?)\]\s*=\s*(.+)$/
+    );
+
+if (arrayAssign) {
+
+    const arrayName =
+        arrayAssign[1];
+
+    const index =
+        Number(
+            evalExpr(
+                arrayAssign[2],
+                vars
+            )
+        );
+
+    const value =
+        evalExpr(
+            arrayAssign[3],
+            vars
+        );
+
+    if (
+        Array.isArray(
+            vars[arrayName]
+        )
+    ) {
+
+        vars[arrayName][index] =
+            value;
+    }
+
+    continue;
+}
         /* =========================
            再代入
         ========================= */
@@ -1055,11 +1246,13 @@ if (line.startsWith("return ")) {
 
 function evalExpr(expr, vars) {
 
+    expr = expr.trim();
+
     for (const key in consts) {
 
         expr = expr.replace(
             new RegExp(`\\b${key}\\b`, "g"),
-            consts[key]
+            JSON.stringify(consts[key])
         );
     }
 
@@ -1067,16 +1260,19 @@ function evalExpr(expr, vars) {
 
         expr = expr.replace(
             new RegExp(`\\b${key}\\b`, "g"),
-            vars[key]
+            JSON.stringify(vars[key])
         );
     }
 
     try {
+
         return Function(
-            "return (" + expr + ")"
+            `"use strict";
+            return (${expr});`
         )();
-    }
-    catch {
+
+    } catch {
+
         return expr;
     }
 }
@@ -1097,14 +1293,27 @@ for (let line of lines) {
 
     if (line.startsWith("print ")) {
 
-        const value = line.slice(6).trim();
+    let value =
+        line.substring(6).trim();
 
-        if (value.startsWith('"')) {
-            js += `console.log(${value});\n`;
-        } else {
-            js += `console.log(${value});\n`;
-        }
+    if (
+        vars.hasOwnProperty(value)
+    ) {
+
+        log(vars[value]);
+
+        continue;
     }
+
+    log(
+        evalExpr(
+            value,
+            vars
+        )
+    );
+
+    continue;
+}
 
     if (line.startsWith("let ")) {
 
