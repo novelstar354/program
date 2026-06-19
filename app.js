@@ -26,6 +26,49 @@ const openBtn = document.getElementById("openFileBtn");
 const newBtn = document.getElementById("newFileBtn");
 const clearBtn = document.getElementById("clearConsoleBtn");
 const themeBtn = document.getElementById("themeBtn");
+
+const sidebar =
+    document.getElementById("fileSidebar");
+
+const resizer =
+    document.getElementById("sidebarResizer");
+
+let resizing = false;
+
+resizer.addEventListener(
+    "mousedown",
+    () => {
+        resizing = true;
+    }
+);
+
+document.addEventListener(
+    "mousemove",
+    (e) => {
+
+        if (!resizing) return;
+
+        let width = e.clientX;
+
+        width = Math.max(
+            180,
+            Math.min(
+                600,
+                width
+            )
+        );
+
+        sidebar.style.width =
+            width + "px";
+    }
+);
+
+document.addEventListener(
+    "mouseup",
+    () => {
+        resizing = false;
+    }
+);
 /* =====================================================
 SEARCH
 ===================================================== */
@@ -342,22 +385,27 @@ localStorage.setItem("star_files", JSON.stringify(files));
 }
 
 /* 新規作成 */
-function createFile(name = "untitled.star") {
-const file = {
-id: crypto.randomUUID(),
-name,
-content: ""
-};
+function createFile() {
 
-files.push(file);
-activeFile = file;
+    const name =
+        prompt("ファイル名を入力", "main.star");
 
-editor.setValue("");
+    if (!name) return;
 
-saveFiles();
-renderTabs();
-renderTree();
+    const file = {
+        id: crypto.randomUUID(),
+        name: name,
+        content: ""
+    };
 
+    files.push(file);
+    activeFile = file;
+
+    editor.setValue("");
+
+    saveFiles();
+    renderTabs();
+    renderTree();
 }
 
 /* 開く */
@@ -424,34 +472,40 @@ renderTree();
 
 /* Tree */
 function renderTree() {
-fileTree.innerHTML = "";
+    fileTree.innerHTML = "";
 
-files.forEach(file => {
-    const item = document.createElement("div");
+    files.forEach(file => {
 
-    item.className = "file";
-    item.textContent = file.name;
+        const item = document.createElement("div");
+        item.className = "file";
 
-    item.onclick = () => openFile(file.id);
+        const name = document.createElement("span");
+        name.textContent = file.name;
 
-    item.oncontextmenu = (e) => {
-        e.preventDefault();
+        const renameBtn = document.createElement("button");
+        renameBtn.textContent = "変更";
+        renameBtn.className = "renameBtn";
 
-        const action = prompt("rename / delete");
+        renameBtn.onclick = (e) => {
+            e.stopPropagation();
 
-        if (action === "rename") {
-            const name = prompt("new name");
-            if (name) renameFile(file.id, name);
-        }
+            const newName = prompt(
+                "新しいファイル名",
+                file.name
+            );
 
-        if (action === "delete") {
-            deleteFile(file.id);
-        }
-    };
+            if (newName) {
+                renameFile(file.id, newName);
+            }
+        };
 
-    fileTree.appendChild(item);
-});
+        item.appendChild(name);
+        item.appendChild(renameBtn);
 
+        item.onclick = () => openFile(file.id);
+
+        fileTree.appendChild(item);
+    });
 }
 
 let saveTimer;
@@ -1826,3 +1880,38 @@ document.addEventListener(
 
     }
 );
+window.addEventListener("load", () => {
+
+    const sidebar =
+        document.getElementById("fileSidebar");
+
+    const resizer =
+        document.getElementById("sidebarResizer");
+
+    if (!sidebar || !resizer) return;
+
+    let isDragging = false;
+
+    resizer.addEventListener("mousedown", () => {
+        isDragging = true;
+        document.body.style.cursor = "ew-resize";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+
+        if (!isDragging) return;
+
+        let newWidth = e.clientX;
+
+        if (newWidth < 180) newWidth = 180;
+        if (newWidth > 600) newWidth = 600;
+
+        sidebar.style.width = newWidth + "px";
+    });
+
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.cursor = "";
+    });
+
+});
