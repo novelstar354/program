@@ -138,6 +138,23 @@ name = "star"
 con name = "STar"
 ("無しで記述すると数字として扱われます。)
 
+#文字連結
+let first ="STar"
+let last = "IDE"
+let title = first + " " + last
+
+let score = 100
+print "Score: " + score
+
+#配列
+let nums = [1,2,3]
+
+#配列要素取得
+print nums[0]
+
+#配列要素変更
+nums[1] = 100
+
 #演算
 y = 5 + 2
 y = 5 - 3
@@ -153,12 +170,18 @@ x < y yがxより小さい
 x >= y xがy以上
 x <= y xがy以下
 
+#
+論理演算
+OR a <0 || b <  0
+NOT !(a > 0)
+
+
 # 繰り返し
 repeat 5{
     print name
 }
 (回数には変数を利用できます。)
-
+(break,continueが使えます。)
 # 条件分岐
 if true {
     print "YES"
@@ -172,6 +195,21 @@ else{
     print"ERROR"
 }
 (eifは何度でも重ねられます。)
+
+#スイッチ文
+switch level {
+    case 1:
+        print "Beginner"
+        break
+    case 2:
+        print "Normal"
+        break
+    case 3:
+        print "Hard"
+        break
+    default:
+        print "Error"
+}
 
 # 関数
 func hello() {
