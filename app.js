@@ -5,7 +5,8 @@ app.js
 
 let editor = null;
 
-
+const functions = {};
+const consts = {};
 
 /* =====================================================
 DOM
@@ -411,81 +412,448 @@ a.click();
 STar Runtime
 ===================================================== */
 
-function runSTar(code) {
-
-    clearConsole();
+function runSTar(code, vars = {}) {
 
     const lines = code.split("\n");
-    const vars = {};
+
+    function getBlock(startIndex) {
+
+        const block = [];
+        let depth = 1;
+        let i = startIndex;
+
+        while (i < lines.length && depth > 0) {
+
+            const current = lines[i].trim();
+
+            if (current.endsWith("{"))
+                depth++;
+
+            if (current === "}") {
+
+                depth--;
+
+                if (depth === 0)
+                    break;
+            }
+
+            if (depth > 0)
+                block.push(lines[i]);
+
+            i++;
+        }
+
+        return {
+            block: block.join("\n"),
+            end: i
+        };
+    }
 
     for (let i = 0; i < lines.length; i++) {
 
         let line = lines[i].trim();
+
         if (!line) continue;
         if (line.startsWith("#")) continue;
 
         /* =========================
-           ① 変数宣言
+           con
         ========================= */
-        if (line.startsWith("let ")) {
+        if (line.startsWith("con ")) {
 
             const parts = line.substring(4).split("=");
 
             const key = parts[0].trim();
+
             let value = parts[1]?.trim();
 
             if (value?.startsWith('"')) {
                 value = value.slice(1, -1);
+            } else {
+                value = evalExpr(value, vars);
+            }
+
+            consts[key] = value;
+            continue;
+        }
+
+        /* =========================
+           repeat
+        ========================= */
+        if (line.startsWith("repeat ")) {
+
+            const match =
+                line.match(/^repeat\s+(.+?)\s*\{$/);
+
+            if (!match) {
+                log("Syntax Error: repeat");
+                continue;
+            }
+
+            const count =
+                Number(
+                    evalExpr(match[1], vars)
+                );
+
+            const result =
+                getBlock(i + 1);
+
+            for (let r = 0; r < count; r++) {
+
+                vars.count = r + 1;
+
+                runSTar(
+                    result.block,
+                    vars
+                );
+            }
+
+            i = result.end;
+            continue;
+        }
+
+        /* =========================
+           while
+        ========================= */
+        if (line.startsWith("while ")) {
+
+            const match =
+                line.match(/^while\s+(.+?)\s*\{$/);
+
+            if (!match) {
+                log("Syntax Error: while");
+                continue;
+            }
+
+            const condition =
+                match[1];
+
+            const result =
+                getBlock(i + 1);
+
+            while (
+                evalExpr(
+                    condition,
+                    vars
+                )
+            ) {
+
+                runSTar(
+                    result.block,
+                    vars
+                );
+            }
+
+            i = result.end;
+            continue;
+        }
+
+        /* =========================
+           if / eif / else
+        ========================= */
+        if (line.startsWith("if ")) {
+
+            let executed = false;
+
+            const match =
+                line.match(/^if\s+(.+?)\s*\{$/);
+
+            if (!match) {
+                log("Syntax Error: if");
+                continue;
+            }
+
+            const result =
+                getBlock(i + 1);
+
+            if (
+                evalExpr(
+                    match[1],
+                    vars
+                )
+            ) {
+
+                executed = true;
+
+                runSTar(
+                    result.block,
+                    vars
+                );
+            }
+
+            i = result.end;
+
+            while (
+                i + 1 < lines.length &&
+                lines[i + 1].trim().startsWith("eif ")
+            ) {
+
+                i++;
+
+                const eifLine =
+                    lines[i].trim();
+
+                const eifMatch =
+                    eifLine.match(
+                        /^eif\s+(.+?)\s*\{$/
+                    );
+
+                const eifResult =
+                    getBlock(i + 1);
+
+                if (
+                    !executed &&
+                    evalExpr(
+                        eifMatch[1],
+                        vars
+                    )
+                ) {
+
+                    executed = true;
+
+                    runSTar(
+                        eifResult.block,
+                        vars
+                    );
+                }
+
+                i = eifResult.end;
+            }
+
+            if (
+                i + 1 < lines.length &&
+                lines[i + 1].trim() === "else{"
+            ) {
+
+                i++;
+
+                const elseResult =
+                    getBlock(i + 1);
+
+                if (!executed) {
+
+                    runSTar(
+                        elseResult.block,
+                        vars
+                    );
+                }
+
+                i = elseResult.end;
+            }
+
+            continue;
+        }
+/* =========================
+   input
+========================= */
+if (line.startsWith("input ")) {
+
+    const match =
+        line.match(
+         /^input\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\s+"([^"]*)")?(?:\s*=\s*(.+))?$/
+        );
+
+    if (!match) {
+        log("Syntax Error: input");
+        continue;
+    }
+
+    const varName = match[1];
+    const message = match[2];
+    let defaultValue = match[3];
+
+    if (varName in consts) {
+        log(`Constant Error: ${varName}`);
+        continue;
+    }
+
+    if (defaultValue !== undefined) {
+
+        defaultValue =
+            defaultValue.trim();
+
+        if (
+            defaultValue.startsWith('"') &&
+            defaultValue.endsWith('"')
+        ) {
+            defaultValue =
+                defaultValue.slice(1, -1);
+        } else {
+            defaultValue =
+                evalExpr(
+                    defaultValue,
+                    vars
+                );
+        }
+    }
+
+    const promptText =
+        message ||
+        `${varName} =`;
+
+    const value =
+    prompt(
+        promptText,
+        defaultValue ?? ""
+    );
+
+if (
+    value === null ||
+    value.trim() === ""
+) {
+
+    if (defaultValue !== undefined) {
+
+        vars[varName] =
+            defaultValue;
+
+    } else {
+
+        vars[varName] = "";
+    }
+
+    continue;
+}
+
+    const num =
+        Number(value);
+
+    vars[varName] =
+        value.trim() !== "" &&
+        !isNaN(num)
+            ? num
+            : value;
+
+    continue;
+}
+        /* =========================
+           let
+        ========================= */
+        if (line.startsWith("let ")) {
+
+            const parts =
+                line.substring(4).split("=");
+
+            const key =
+                parts[0].trim();
+
+            let value =
+                parts[1]?.trim();
+
+            if (value?.startsWith('"')) {
+
+                value =
+                    value.slice(1, -1);
+
+            } else {
+
+                value =
+                    evalExpr(
+                        value,
+                        vars
+                    );
+            }
+
+            vars[key] = value;
+            continue;
+        }
+
+        /* =========================
+           print
+        ========================= */
+        if (line.startsWith("print ")) {
+
+            let value =
+                line.substring(6).trim();
+
+            if (value.startsWith('"')) {
+
+                log(
+                    value.slice(1, -1)
+                );
+
+            } else {
+
+                log(
+                    vars[value] ??
+                    evalExpr(
+                        value,
+                        vars
+                    )
+                );
+            }
+
+            continue;
+        }
+
+        /* =========================
+           再代入
+        ========================= */
+        if (line.includes("=")) {
+
+            const parts =
+                line.split("=");
+
+            const key =
+                parts[0].trim();
+
+            if (key in consts) {
+
+                log(
+                    `Constant Error: ${key}`
+                );
+
+                continue;
+            }
+
+            let value =
+                parts[1]?.trim();
+
+            if (value?.startsWith('"')) {
+
+                value =
+                    value.slice(1, -1);
+
+            } else {
+
+                value =
+                    evalExpr(
+                        value,
+                        vars
+                    );
             }
 
             vars[key] = value;
         }
-
-        /* =========================
-           ② 再代入（🔥追加）
-        ========================= */
-        else if (line.includes("=")) {
-
-    const parts = line.split("=");
-
-    const key = parts[0].trim();
-    let value = parts[1]?.trim();
-
-    if (value?.startsWith('"')) {
-        value = value.slice(1, -1);
-    } else {
-        value = evalExpr(value, vars);
     }
 
-    vars[key] = value;
+    return vars;
 }
 
-        /* =========================
-           ③ print
-        ========================= */
-        else if (line.startsWith("print ")) {
-
-            let value = line.substring(6).trim();
-
-            if (value.startsWith('"')) {
-                log(value.slice(1, -1));
-            } else {
-                log(vars[value] ?? value);
-            }
-        }
-    }
-}
 function evalExpr(expr, vars) {
 
-    // 変数を式に置換
+    for (const key in consts) {
+
+        expr = expr.replace(
+            new RegExp(`\\b${key}\\b`, "g"),
+            consts[key]
+        );
+    }
+
     for (const key in vars) {
-        const regex = new RegExp(`\\b${key}\\b`, "g");
-        expr = expr.replace(regex, vars[key]);
+
+        expr = expr.replace(
+            new RegExp(`\\b${key}\\b`, "g"),
+            vars[key]
+        );
     }
 
     try {
-        return Function("return " + expr)();
-    } catch (e) {
+        return Function(
+            "return (" + expr + ")"
+        )();
+    }
+    catch {
         return expr;
     }
 }
@@ -542,12 +910,13 @@ EVENTS
 
 runBtn.onclick = () => {
 
-saveCurrentFile();
+    clearConsole();
 
-runSTar(
-    editor.getValue()
-);
+    saveCurrentFile();
 
+    runSTar(
+        editor.getValue()
+    );
 };
 
 saveBtn.onclick = saveFile;
