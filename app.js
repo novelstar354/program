@@ -476,7 +476,63 @@ function runSTar(code, vars = {}) {
             consts[key] = value;
             continue;
         }
+/* =========================
+   func
+========================= */
+if (line.startsWith("func ")) {
 
+    const match =
+        line.match(
+            /^func\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\)\s*\{$/
+        );
+
+    if (!match) {
+        log("Syntax Error: func");
+        continue;
+    }
+
+    const funcName = match[1];
+
+    const params =
+        match[2]
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v);
+
+    const block = [];
+
+    let depth = 1;
+    i++;
+
+    while (i < lines.length && depth > 0) {
+
+        const current =
+            lines[i].trim();
+
+        if (current.endsWith("{"))
+            depth++;
+
+        if (current === "}") {
+
+            depth--;
+
+            if (depth === 0)
+                break;
+        }
+
+        if (depth > 0)
+            block.push(lines[i]);
+
+        i++;
+    }
+
+    functions[funcName] = {
+        params,
+        body: block.join("\n")
+    };
+
+    continue;
+}
         /* =========================
            repeat
         ========================= */
@@ -726,6 +782,85 @@ if (
 
     continue;
 }
+ /* =========================
+   let x = call func()
+========================= */
+if (
+    line.startsWith("let ") &&
+    line.includes("call ")
+) {
+
+    const match =
+        line.match(
+            /^let\s+(.+?)\s*=\s*call\s+([a-zA-Z_][a-zA-Z0-9_]*)\((.*?)\)$/
+        );
+
+    if (match) {
+
+        const varName =
+            match[1].trim();
+
+        const funcName =
+            match[2];
+
+        const func =
+            functions[funcName];
+
+        if (!func) {
+
+            log(
+                `Function Error: ${funcName}`
+            );
+
+            continue;
+        }
+
+        const localVars =
+            { ...vars };
+
+        const args =
+            match[3]
+                .split(",")
+                .map(v => v.trim())
+                .filter(v => v);
+
+        func.params.forEach(
+            (p, index) => {
+
+                const arg =
+                    args[index];
+
+                if (
+                    arg?.startsWith('"') &&
+                    arg?.endsWith('"')
+                ) {
+
+                    localVars[p] =
+                        arg.slice(1, -1);
+
+                } else {
+
+                    localVars[p] =
+                        evalExpr(
+                            arg ?? "undefined",
+                            vars
+                        );
+                }
+            }
+        );
+
+        const result =
+            runSTar(
+                func.body,
+                localVars
+            );
+
+        vars[varName] =
+            result.__return__;
+
+        continue;
+    }
+}
         /* =========================
            let
         ========================= */
@@ -757,7 +892,95 @@ if (
             vars[key] = value;
             continue;
         }
+/* =========================
+   call
+========================= */
+if (line.startsWith("call ")) {
 
+    const match =
+        line.match(
+            /^call\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\((.*?)\))?$/
+        );
+
+    if (!match) {
+
+        log("Syntax Error: call");
+        continue;
+    }
+
+    const funcName =
+        match[1];
+
+    const func =
+        functions[funcName];
+
+    if (!func) {
+
+        log(
+            `Function Error: ${funcName}`
+        );
+
+        continue;
+    }
+
+    const localVars =
+        { ...vars };
+
+    const args =
+        (match[2] || "")
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v);
+
+    func.params.forEach(
+        (p, index) => {
+
+            const arg =
+                args[index];
+
+            if (
+                arg?.startsWith('"') &&
+                arg?.endsWith('"')
+            ) {
+
+                localVars[p] =
+                    arg.slice(1, -1);
+
+            } else {
+
+                localVars[p] =
+                    evalExpr(
+                        arg ?? "undefined",
+                        vars
+                    );
+            }
+        }
+    );
+
+    const result =
+        runSTar(
+            func.body,
+            localVars
+        );
+
+    vars.__return__ =
+        result.__return__;
+
+    continue;
+}
+        /* =========================
+   return
+========================= */
+if (line.startsWith("return ")) {
+
+    vars.__return__ =
+        evalExpr(
+            line.substring(7).trim(),
+            vars
+        );
+
+    return vars;
+}
         /* =========================
            print
         ========================= */
@@ -913,6 +1136,10 @@ runBtn.onclick = () => {
     clearConsole();
 
     saveCurrentFile();
+
+    for (const k in functions) {
+        delete functions[k];
+    }
 
     runSTar(
         editor.getValue()
