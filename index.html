@@ -30,7 +30,7 @@
 <header id="topbar">
 
     <div class="brand">
-        STar IDE
+        STar IDE Ultimate
     </div>
 
     <div class="toolbar">
@@ -52,11 +52,8 @@
             ▶ 実行
         </button>
 
-        <button id="compileBtn">
-            JS変換
-        </button>
-        <button id="helpBtn">使い方</button>
 
+        <button id="helpBtn">使い方</button>
 
 
     </div>
@@ -131,26 +128,50 @@ print "Hello"
 
 # 変数
 let name = "STar"
+("無しで記述すると数字として扱われます。)
 
 #再代入
 name = "star"
+("無しで記述すると数字として扱われます。)
+
+#定数
+con name = "STar"
+("無しで記述すると数字として扱われます。)
 
 #演算
 y = 5 + 2
 y = 5 - 3
 y = 5 * 4
 y = 20 / 5
-(変数同士の計算もできます）
+(変数同士の計算もできます。）
+
+#比較演算
+x == y xとyが等しい
+x != y xとyが等しくない
+x > y xがyより大きい
+x < y yがxより小さい
+x >= y xがy以上
+x <= y xがy以下
 
 # 繰り返し
-repeat 5 {
+repeat 5{
     print name
 }
+(回数には変数を利用できます。)
 
 # 条件分岐
 if true {
     print "YES"
 }
+
+eif false{
+    print"NO"
+}
+
+else{
+    print"ERROR"
+}
+(eifは何度でも重ねられます。)
 
 # 関数
 func hello() {
@@ -162,7 +183,21 @@ while hp > 0 {
     print hp
 }
 
+#入力
+input name
 
+input name "名前を入力"
+
+input age "年齢を入力" = 15
+
+input user "ユーザー名" = "guest"
+
+input score "点数" = score
+
+input y "入力" = x + 5
+
+#コメントアウト
+#コメント
 </pre>
 
     </div>
