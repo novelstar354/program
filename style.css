@@ -187,16 +187,40 @@ body{
    SIDEBAR
 ===================================================== */
 
-#sidebar{
-    width:260px;
+#fileSidebar{
+    width:260px;      /* デフォルト */
+    min-width:180px;
+    max-width:600px;
+
     overflow:auto;
 
     background:rgba(15,23,42,.75);
     backdrop-filter:blur(25px);
 
     border-right:1px solid rgba(255,255,255,.08);
+
+    position:relative;
 }
 
+#sidebarResizer{
+    position:absolute;
+    top:0;
+    right:0;
+
+    width:8px;
+    height:100%;
+
+    cursor:ew-resize;
+    background:rgba(56,189,248,.15);
+}
+
+#sidebarResizer:hover{
+    background:#38bdf8;
+}
+
+#sidebarResizer:hover{
+    background:rgba(56,189,248,.4);
+}
 .sidebar-header{
     padding:12px;
     font-size:13px;
@@ -521,4 +545,81 @@ body{
     background: #1e293b;
     border: 1px solid #334155;
     color: white;
+}
+.file{
+    display:flex;
+    flex-direction:row; /* 横並び */
+    align-items:center;
+    justify-content:space-between;
+
+    padding:10px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.file span{
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.renameBtn{
+    flex-shrink:0;
+
+    border:none;
+    padding:4px 8px;
+
+    border-radius:6px;
+    cursor:pointer;
+
+    background:#38bdf8;
+    color:white;
+}
+.file{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.file span{
+    flex:1;
+}
+#fileSidebar{
+    width:260px;
+    min-width:180px;
+    max-width:600px;
+
+    position:relative;
+
+    overflow:auto;
+
+    background:rgba(15,23,42,.75);
+    backdrop-filter:blur(25px);
+
+    border-right:1px solid rgba(255,255,255,.08);
+}
+
+#sidebarResizer{
+    position:absolute;
+    top:0;
+    right:0;
+
+    width:6px;
+    height:100%;
+
+    cursor:ew-resize;
+    background:transparent;
+}
+
+#sidebarResizer:hover{
+    background:#38bdf8;
+}
+#fileSidebar{
+    width:260px;
+    min-width:180px;
+    max-width:600px;
+    flex-shrink:0;
+    position:relative;
 }
