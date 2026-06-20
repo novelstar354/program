@@ -600,22 +600,45 @@ if (line === "break") {
         }
         if (line.startsWith("wait ")) {
 
-    const ms =
-        Number(
-            evalExpr(
-                line.substring(5),
-                vars
-            )
-        );
+    let arg = line.substring(5).trim();
 
-    await new Promise(
-        r =>
-            setTimeout(
-                r,
-                ms
-            )
-    );
+    // まず式として評価（変数・計算対応）
+    let evaluated = evalExpr(arg, vars);
 
+    // 数値 or 文字列どっちも扱う
+    let ms;
+
+    // -------------------------
+    // ① すでに数値ならそのまま
+    // -------------------------
+    if (typeof evaluated === "number") {
+        ms = evaluated;
+    } else {
+        let str = String(evaluated).trim();
+
+        // -------------------------
+        // ② 単位付き対応
+        // -------------------------
+        if (str.endsWith("ms")) {
+            ms = Number(str.slice(0, -2));
+        }
+        else if (str.endsWith("s")) {
+            ms = Number(str.slice(0, -1)) * 1000;
+        }
+        else {
+            ms = Number(str);
+        }
+    }
+
+    // -------------------------
+    // ③ バリデーション
+    // -------------------------
+    if (!Number.isFinite(ms)) {
+        runtimeError("Invalid wait value", lineNumber, line);
+        continue;
+    }
+
+    await new Promise(r => setTimeout(r, ms));
     continue;
 }
 /* =========================
