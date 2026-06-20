@@ -623,3 +623,18 @@ body{
     flex-shrink:0;
     position:relative;
 }
+.error { color: red; }
+.raw { color: #aaa; margin-left: 10px; }
+.error {
+    color: #ff4d4d;
+    padding: 6px;
+    border-bottom: 1px solid #333;
+}
+
+.error:hover {
+    background: rgba(255, 0, 0, 0.08);
+}
+
+.err-title {
+    font-weight: bold;
+}
