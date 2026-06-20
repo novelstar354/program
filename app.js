@@ -10,7 +10,7 @@ const consts = {};
 const keys = {};
 let mouseX = 0;
 let mouseY = 0;
-
+let saveTimer = null;
 
 /* =====================================================
 DOM
@@ -358,8 +358,7 @@ function createFile() {
 
     files.push(file);
     activeFile = file;
-
-    editor.setValue("");
+if (!editor) return;
 
     saveFiles();
     renderTabs();
@@ -466,7 +465,6 @@ function renderTree() {
     });
 }
 
-let saveTimer;
 
 function attachEditorEvents() {
     if (!editor) return;
@@ -605,25 +603,28 @@ if (line === "break") {
     // まず式として評価（変数・計算対応）
     let evaluated = evalExpr(arg, vars);
 
-    // 数値 or 文字列どっちも扱う
     let ms;
 
     // -------------------------
-    // ① すでに数値ならそのまま
+    // ① 数値ならそのまま
     // -------------------------
     if (typeof evaluated === "number") {
         ms = evaluated;
     } else {
+
         let str = String(evaluated).trim();
 
         // -------------------------
-        // ② 単位付き対応
+        // ② 単位対応
         // -------------------------
         if (str.endsWith("ms")) {
             ms = Number(str.slice(0, -2));
         }
         else if (str.endsWith("s")) {
             ms = Number(str.slice(0, -1)) * 1000;
+        }
+        else if (str.endsWith("m")) {
+            ms = Number(str.slice(0, -1)) * 60000;
         }
         else {
             ms = Number(str);
@@ -732,7 +733,7 @@ if (!match) {
 
         vars.count = r + 1;
 
-        const loopResult = runSTar(result.block, { ...vars });
+        const loopResult = await runSTar(result.block, vars, lineNumber);
 
         if (
             loopResult.__continue__
@@ -783,7 +784,7 @@ if (!match) {
         )
     ) {
 
-        const loopResult = runSTar(result.block, { ...vars });
+        const loopResult = await runSTar(result.block, vars, lineNumber);
 
         if (
             loopResult.__continue__
@@ -1708,8 +1709,7 @@ const file = {
 files.push(file);
 
 activeFile = file;
-
-editor.setValue("");
+if (!editor) return;
 
 renderTabs();
 renderTree();
