@@ -1720,30 +1720,52 @@ clearBtn.onclick =
 clearConsole;
 
 fileInput.addEventListener("change", e => {
-const file = e.target.files[0];
-if (!file) return;
 
-const reader = new FileReader();
+    saveCurrentFile();
 
-reader.onload = () => {
-    const newFile = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        content: reader.result
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+        const existing =
+            files.find(f => f.name === file.name);
+
+        if (existing) {
+
+            existing.content = reader.result;
+            activeFile = existing;
+
+            editor.setValue(existing.content);
+
+        } else {
+
+            const newFile = {
+                id: crypto.randomUUID(),
+                name: file.name,
+                content: reader.result
+            };
+
+            files.push(newFile);
+            activeFile = newFile;
+
+            editor.setValue(newFile.content);
+        }
+
+        saveFiles();
+        renderTabs();
+        renderTree();
+
+        fileInput.value = "";
     };
 
-    files.push(newFile);
-    activeFile = newFile;
+    reader.onerror = () => {
+        log("ファイル読み込み失敗");
+    };
 
-    editor.setValue(newFile.content);
-
-    saveFiles();
-    renderTabs();
-    renderTree();
-};
-
-reader.readAsText(file);
-
+    reader.readAsText(file);
 });
 
 themeBtn.onclick = () => {
@@ -1906,3 +1928,69 @@ window.addEventListener("load", () => {
     });
 
 });
+reader.onload = () => {
+
+    const newFile = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        content: reader.result
+    };
+
+    files.push(newFile);
+
+    activeFile = newFile;
+
+    editor.setValue(newFile.content);
+
+    saveFiles();
+    renderTabs();
+    renderTree();
+};
+const editorArea =
+    document.getElementById("editor");
+
+editorArea.addEventListener(
+    "dragover",
+    e => {
+        e.preventDefault();
+    }
+);
+
+editorArea.addEventListener(
+    "drop",
+    e => {
+
+        e.preventDefault();
+
+        const file =
+            e.dataTransfer.files[0];
+
+        if (!file) return;
+
+        const reader =
+            new FileReader();
+
+        reader.onload = () => {
+
+            const newFile = {
+                id: crypto.randomUUID(),
+                name: file.name,
+                content: reader.result
+            };
+
+            files.push(newFile);
+
+            activeFile = newFile;
+
+            editor.setValue(
+                newFile.content
+            );
+
+            saveFiles();
+            renderTabs();
+            renderTree();
+        };
+
+        reader.readAsText(file);
+    }
+);
