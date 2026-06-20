@@ -80,10 +80,12 @@ SEARCH
 
 function escapeHtml(text) {
 
+    text = String(text);
+
     return text
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 /* =====================================================
 LOG
@@ -1059,7 +1061,7 @@ if (
         );
 
         const result =
-            runSTar(
+            await runSTar(
                 func.body,
                 localVars
             );
@@ -1211,7 +1213,7 @@ if (line.startsWith("call ")) {
     );
 
     const result =
-        runSTar(
+        await runSTar(
             func.body,
             localVars
         );
@@ -1239,28 +1241,17 @@ if (line.startsWith("return ")) {
         ========================= */
         if (line.startsWith("print ")) {
 
-            let value =
-                line.substring(6).trim();
+    const expr =
+        line.substring(6).trim();
 
-            if (value.startsWith('"')) {
+    const value =
+        expr.startsWith('"')
+            ? expr.slice(1,-1)
+            : evalExpr(expr, vars);
 
-                log(
-                    value.slice(1, -1)
-                );
-
-            } else {
-
-                log(
-                    vars[value] ??
-                    evalExpr(
-                        value,
-                        vars
-                    )
-                );
-            }
-
-            continue;
-        }
+    log(value);
+    continue;
+}
 if (line.startsWith("switch ")) {
 
     const match =
@@ -1970,26 +1961,7 @@ editorArea.addEventListener(
         const reader =
             new FileReader();
 
-        reader.onload = () => {
-
-            const newFile = {
-                id: crypto.randomUUID(),
-                name: file.name,
-                content: reader.result
-            };
-
-            files.push(newFile);
-
-            activeFile = newFile;
-
-            editor.setValue(
-                newFile.content
-            );
-
-            saveFiles();
-            renderTabs();
-            renderTree();
-        };
+        
 
         reader.readAsText(file);
     }
