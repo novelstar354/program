@@ -10,6 +10,8 @@ const consts = {};
 const keys = {};
 let mouseX = 0;
 let mouseY = 0;
+
+
 /* =====================================================
 DOM
 ===================================================== */
@@ -72,54 +74,9 @@ document.addEventListener(
 /* =====================================================
 SEARCH
 ===================================================== */
-const helpSearch =
-    document.getElementById("helpSearch");
 
-const helpContent =
-    document.querySelector(
-        "#helpContent pre"
-    );
 
-const originalText =
-    helpContent.textContent;
 
-helpSearch.addEventListener(
-    "input",
-    () => {
-
-        const keyword =
-            helpSearch.value.trim();
-
-        if (!keyword) {
-
-            helpContent.textContent =
-                originalText;
-
-            return;
-        }
-
-        const lines =
-            originalText.split("\n");
-
-        helpContent.innerHTML =
-            lines.map(line => {
-
-                if (
-                    line
-                    .toLowerCase()
-                    .includes(
-                        keyword.toLowerCase()
-                    )
-                ) {
-
-                    return `<span class="searchHit">${escapeHtml(line)}</span>`;
-                }
-
-                return escapeHtml(line);
-
-            }).join("<br>");
-    }
-);
 
 function escapeHtml(text) {
 
@@ -133,10 +90,36 @@ LOG
 ===================================================== */
 
 function log(text) {
-consoleEl.textContent += text + "\n";
-consoleEl.scrollTop = consoleEl.scrollHeight;
+    consoleEl.innerHTML += `<div>${escapeHtml(text)}</div>`;
 }
 
+function logError(err) {
+    const div = document.createElement("div");
+    div.className = "error";
+
+    div.innerHTML = `
+    <div class="err-title">[Line ${err.lineNumber}] ${escapeHtml(err.error)}</div>
+    ${err.raw ? `<div class="raw">→ ${escapeHtml(err.raw)}</div>` : ""}
+`;
+
+    div.style.cursor = "pointer";
+
+    div.onclick = () => {
+        jumpToLine(err.lineNumber);
+    };
+
+    consoleEl.appendChild(div);
+}
+function jumpToLine(lineNumber) {
+    if (!editor) return;
+
+    editor.revealLineInCenter(lineNumber);
+    editor.setPosition({
+        lineNumber,
+        column: 1
+    });
+    editor.focus();
+}
 function clearConsole() {
 consoleEl.textContent = "";
 }
@@ -183,7 +166,46 @@ function initHelp() {
     const helpBtn = document.getElementById("helpBtn");
     const helpPanel = document.getElementById("helpPanel");
     const closeHelp = document.getElementById("closeHelp");
+const originalText =
+    helpContent.textContent;
 
+helpSearch.addEventListener(
+    "input",
+    () => {
+
+        const keyword =
+            helpSearch.value.trim();
+
+        if (!keyword) {
+
+            helpContent.textContent =
+                originalText;
+
+            return;
+        }
+
+        const lines =
+            originalText.split("\n");
+
+        helpContent.innerHTML =
+            lines.map(line => {
+
+                if (
+                    line
+                    .toLowerCase()
+                    .includes(
+                        keyword.toLowerCase()
+                    )
+                ) {
+
+                    return `<span class="searchHit">${escapeHtml(line)}</span>`;
+                }
+
+                return escapeHtml(line);
+
+            }).join("<br>");
+    }
+);
     if (!helpBtn || !helpPanel || !closeHelp) {
         console.warn("help UI not found");
         return;
@@ -567,7 +589,7 @@ a.click();
 STar Runtime
 ===================================================== */
 
-async function runSTar(code, vars = {}) {
+async function runSTar(code, vars = {}, baseLine = 1) {
 
     const lines = code.split("\n");
 
@@ -606,10 +628,11 @@ async function runSTar(code, vars = {}) {
 
     for (let i = 0; i < lines.length; i++) {
 
-        let line = lines[i].trim();
+    const lineNumber = baseLine + i;
+    let line = lines[i].trim();
 
-        if (!line) continue;
-        if (line.startsWith("#")) continue;
+    if (!line) continue;
+    if (line.startsWith("#")) continue;
 /* =========================
    break
 ========================= */
@@ -726,10 +749,10 @@ if (line.startsWith("func ")) {
             /^repeat\s+(.+?)\s*\{$/
         );
 
-    if (!match) {
-        log("Syntax Error: repeat");
-        continue;
-    }
+if (!match) {
+    runtimeError("Syntax Error (repeat)", lineNumber, line);
+    continue;
+}
 
     const count =
         Number(
@@ -787,10 +810,10 @@ if (line.startsWith("func ")) {
             /^while\s+(.+?)\s*\{$/
         );
 
-    if (!match) {
-        log("Syntax Error: while");
-        continue;
-    }
+   if (!match) {
+    runtimeError("Syntax Error (while)", lineNumber, line);
+    continue;
+}
 
     const condition =
         match[1];
@@ -835,10 +858,8 @@ if (line.startsWith("func ")) {
    continue
 ========================= */
 if (line === "continue") {
-
     vars.__continue__ = true;
-
-    return vars;
+    continue;
 }
         /* =========================
            if / eif / else
@@ -946,9 +967,9 @@ if (line.startsWith("input ")) {
         );
 
     if (!match) {
-        log("Syntax Error: input");
-        continue;
-    }
+    runtimeError("Syntax Error (input)", lineNumber, line);
+    continue;
+}
 
     const varName = match[1];
     const message = match[2];
@@ -1610,16 +1631,16 @@ function evalExpr(expr, vars) {
             return (${expr});`
         )();
 
-    } catch {
-
-        return expr;
-    }
+    } catch (e) {
+    log(`[Expression Error] ${expr}`);
+    return 0;
+}
 }
 /* =====================================================
 COMPILE
 ===================================================== */
 
-function compileToJS(code) {
+function compileToJS(code, vars) {
 
 let js = "";
 
@@ -1849,6 +1870,12 @@ helpPanel.classList.remove(
 
 };
 */
+function runtimeError(msg, line, raw) {
+    log(`[Line ${line}] ${msg}`);
+    if (raw !== undefined) {
+        log(`→ ${raw}`);
+    }
+}
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         document.getElementById("helpPanel")?.classList.remove("open");
