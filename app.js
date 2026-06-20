@@ -1401,6 +1401,7 @@ if (line.startsWith("switch ")) {
     i = result.end;
     continue;
 }
+       
 /*===============================================
     配列再代入
   ===============================================*/
@@ -1440,6 +1441,7 @@ if (arrayAssign) {
 
     continue;
 }
+   
         /* =========================
            再代入
         ========================= */
@@ -1494,7 +1496,18 @@ function evalExpr(expr, vars) {
     }
 
     expr = String(expr).trim();
+/* =========================
+   string template ``
+========================= */
+expr = expr.replace(/`([^`]*)`/g, (_, tpl) => {
 
+    return JSON.stringify(
+        tpl.replace(/\$\{(.*?)\}/g, (_, code) => {
+            return evalExpr(code, vars);
+        })
+    );
+
+});
     /* =========================
        length
     ========================= */
