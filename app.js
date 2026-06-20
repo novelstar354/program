@@ -166,100 +166,36 @@ function initHelp() {
     const helpBtn = document.getElementById("helpBtn");
     const helpPanel = document.getElementById("helpPanel");
     const closeHelp = document.getElementById("closeHelp");
-const originalText =
-    helpContent.textContent;
+    const helpSearch = document.getElementById("helpSearch");
+    const helpContent = document.querySelector("#helpContent pre");
 
-helpSearch.addEventListener(
-    "input",
-    () => {
-
-        const keyword =
-            helpSearch.value.trim();
-
-        if (!keyword) {
-
-            helpContent.textContent =
-                originalText;
-
-            return;
-        }
-
-        const lines =
-            originalText.split("\n");
-
-        helpContent.innerHTML =
-            lines.map(line => {
-
-                if (
-                    line
-                    .toLowerCase()
-                    .includes(
-                        keyword.toLowerCase()
-                    )
-                ) {
-
-                    return `<span class="searchHit">${escapeHtml(line)}</span>`;
-                }
-
-                return escapeHtml(line);
-
-            }).join("<br>");
-    }
-);
-    if (!helpBtn || !helpPanel || !closeHelp) {
+    if (!helpBtn || !helpPanel || !closeHelp || !helpSearch || !helpContent) {
         console.warn("help UI not found");
         return;
     }
 
-    helpBtn.addEventListener("click", () => {
-        helpPanel.classList.add("open");
-    });
+    const originalText = helpContent.textContent;
 
-    closeHelp.addEventListener("click", () => {
-        helpPanel.classList.remove("open");
-    });
-    const helpSearch =
-    document.getElementById("helpSearch");
-
-const helpContent =
-    document.querySelector(
-        "#helpContent pre"
-    );
-
-if (helpSearch && helpContent) {
+    helpBtn.onclick = () => helpPanel.classList.add("open");
+    closeHelp.onclick = () => helpPanel.classList.remove("open");
 
     helpSearch.addEventListener("input", () => {
-
-        const keyword =
-            helpSearch.value.trim().toLowerCase();
+        const keyword = helpSearch.value.trim().toLowerCase();
 
         if (!keyword) {
             helpContent.innerHTML =
-                escapeHtml(originalText)
-                    .replace(/\n/g, "<br>");
+                escapeHtml(originalText).replace(/\n/g, "<br>");
             return;
         }
 
-        const lines =
-            originalText.split("\n");
+        const lines = originalText.split("\n");
 
-        helpContent.innerHTML =
-            lines.map(line => {
-
-                if (
-                    line.toLowerCase()
-                        .includes(keyword)
-                ) {
-                    return `<span class="searchHit">${
-                        escapeHtml(line)
-                    }</span>`;
-                }
-
-                return escapeHtml(line);
-
-            }).join("<br>");
+        helpContent.innerHTML = lines.map(line => {
+            return line.toLowerCase().includes(keyword)
+                ? `<span class="searchHit">${escapeHtml(line)}</span>`
+                : escapeHtml(line);
+        }).join("<br>");
     });
-}
 }
 
 window.addEventListener("load", initHelp);
@@ -548,9 +484,9 @@ function attachEditorEvents() {
 
 /* 初期化 */
 window.addEventListener("load", () => {
-renderTabs();
-initFiles();
-renderTree();
+    initFiles();
+    renderTabs();
+    renderTree();
 });
 /* =====================================================
 SAVE
@@ -773,11 +709,7 @@ if (!match) {
 
         vars.count = r + 1;
 
-        const loopResult =
-            runSTar(
-                result.block,
-                vars
-            );
+        const loopResult = runSTar(result.block, { ...vars });
 
         if (
             loopResult.__continue__
@@ -828,11 +760,7 @@ if (!match) {
         )
     ) {
 
-        const loopResult =
-            runSTar(
-                result.block,
-                vars
-            );
+        const loopResult = runSTar(result.block, { ...vars });
 
         if (
             loopResult.__continue__
