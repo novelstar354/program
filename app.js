@@ -701,7 +701,7 @@ if (line.startsWith("func ")) {
 
     continue;
 }
-        if (line.startsWith("class ")) {
+       if (line.startsWith("class ")) {
 
     const match =
         line.match(
@@ -722,9 +722,38 @@ if (line.startsWith("func ")) {
     const result =
         getBlock(i + 1);
 
-    classes[className] = {
-        body: result.block
+    const cls = {
+        fields: {},
+        methods: {}
     };
+
+    const classLines =
+        result.block.split("\n");
+
+    for (let j = 0; j < classLines.length; j++) {
+
+        let cl =
+            classLines[j].trim();
+
+        if (!cl) continue;
+
+        if (cl.startsWith("let ")) {
+
+            const m =
+                cl.match(
+                    /^let\s+(.+?)\s*=\s*(.+)$/
+                );
+
+            if (m) {
+
+                cls.fields[
+                    m[1].trim()
+                ] = m[2].trim();
+            }
+        }
+    }
+
+    classes[className] = cls;
 
     i = result.end;
     continue;
@@ -1115,7 +1144,8 @@ if (
         const varName = match[1];
         const className = match[2];
 
-        const cls = classes[className];
+        const cls =
+    classes[className];
 
         if (!cls) {
             runtimeError(
@@ -1128,10 +1158,16 @@ if (
 
         const obj = {};
 
-        await runSTar(
-            cls.body,
-            obj
+for (const k in cls.fields) {
+
+    obj[k] =
+        evalExpr(
+            cls.fields[k],
+            vars
         );
+}
+
+obj.__class__ = cls;
 
         vars[varName] = obj;
 
@@ -1519,7 +1555,22 @@ if (arrayAssign) {
 }
 
 function evalExpr(expr, vars) {
+expr = expr.replace(
+    /\bthis\.([a-zA-Z_][a-zA-Z0-9_]*)\b/g,
+    (_, prop) => {
 
+        if (
+            vars.this &&
+            prop in vars.this
+        ) {
+            return JSON.stringify(
+                vars.this[prop]
+            );
+        }
+
+        return "undefined";
+    }
+);
     if (
         expr === undefined ||
         expr === null
@@ -1676,16 +1727,23 @@ expr = expr.replace(
 
     for (const key in vars) {
 
-        expr = expr.replace(
-            new RegExp(
-                `\\b${key}\\b`,
-                "g"
-            ),
-            JSON.stringify(
-                vars[key]
-            )
-        );
+    const value = vars[key];
+
+    if (
+        typeof value === "object" &&
+        value !== null
+    ) {
+        continue;
     }
+
+    expr = expr.replace(
+        new RegExp(
+            `\\b${key}\\b`,
+            "g"
+        ),
+        JSON.stringify(value)
+    );
+}
 
     /* =========================
        実行
