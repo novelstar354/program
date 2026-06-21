@@ -811,6 +811,13 @@ if (line.startsWith("func ")) {
     i = result.end;
     continue;
 }
+           /*===================================
+           clear
+           ====================================*/
+        if (line === "clear") {
+    clearConsole();
+    continue;
+}
         /* =========================
            repeat
         ========================= */
@@ -1977,10 +1984,6 @@ runBtn.onclick = async () => {
 
     for (const k in functions) {
         delete functions[k];
-    }
-
-    for (const k in classes) {
-        delete classes[k];
     }
 
     await runSTar(
