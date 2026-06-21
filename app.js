@@ -741,7 +741,7 @@ if (line.startsWith("func ")) {
 
             const m =
                 cl.match(
-                    /^let\s+(.+?)\s*=\s*(.+)$/
+                    /^let\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/
                 );
 
             if (m) {
@@ -952,7 +952,7 @@ if (line === "continue") {
 
                 executed = true;
 
-                runSTar(
+                await runSTar(
                     result.block,
                     vars
                 );
@@ -988,7 +988,7 @@ if (line === "continue") {
 
                     executed = true;
 
-                    runSTar(
+                    await runSTar(
                         eifResult.block,
                         vars
                     );
@@ -1009,7 +1009,7 @@ if (line === "continue") {
 
                 if (!executed) {
 
-                    runSTar(
+                    await runSTar(
                         elseResult.block,
                         vars
                     );
@@ -1283,7 +1283,10 @@ for (const k in cls.fields) {
     obj[k] =
         evalExpr(
             cls.fields[k],
-            vars
+            {
+                ...vars,
+                this: obj
+            }
         );
 }
 
@@ -1325,7 +1328,7 @@ obj.__class__ = cls;
             vars[key] = value;
             continue;
         }
-        if (line.endsWith(".push()")) {
+        if (line.includes(".push(")) {
 
     const match =
         line.match(
@@ -1556,7 +1559,7 @@ if (line.startsWith("switch ")) {
 
         if (executing) {
 
-            runSTar(
+            await runSTar(
                 current,
                 vars
             );
@@ -1773,7 +1776,7 @@ expr = expr.replace(/`([^`]*)`/g, (_, tpl) => {
 ========================= */
 
 expr = expr.replace(
-    /([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g,
+    /\b(?!this\b)([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g,
     (_, objName, prop) => {
 
         const obj = vars[objName];
@@ -1966,7 +1969,7 @@ return js;
 EVENTS
 ===================================================== */
 
-runBtn.onclick = () => {
+runBtn.onclick = async () => {
 
     clearConsole();
 
@@ -1976,7 +1979,11 @@ runBtn.onclick = () => {
         delete functions[k];
     }
 
-    runSTar(
+    for (const k in classes) {
+        delete classes[k];
+    }
+
+    await runSTar(
         editor.getValue()
     );
 };
@@ -2228,24 +2235,7 @@ window.addEventListener("load", () => {
     });
 
 });
-reader.onload = () => {
 
-    const newFile = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        content: reader.result
-    };
-
-    files.push(newFile);
-
-    activeFile = newFile;
-
-    editor.setValue(newFile.content);
-
-    saveFiles();
-    renderTabs();
-    renderTree();
-};
 const editorArea =
     document.getElementById("editor");
 
@@ -2270,7 +2260,24 @@ editorArea.addEventListener(
         const reader =
             new FileReader();
 
-        
+        reader.onload = () => {
+
+            const newFile = {
+                id: crypto.randomUUID(),
+                name: file.name,
+                content: reader.result
+            };
+
+            files.push(newFile);
+
+            activeFile = newFile;
+
+            editor.setValue(newFile.content);
+
+            saveFiles();
+            renderTabs();
+            renderTree();
+        };
 
         reader.readAsText(file);
     }
