@@ -751,6 +751,59 @@ if (line.startsWith("func ")) {
                 ] = m[2].trim();
             }
         }
+        if (cl.startsWith("func ")) {
+
+    const funcMatch =
+        cl.match(
+            /^func\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\)\s*\{$/
+        );
+
+    if (funcMatch) {
+
+        const methodName = funcMatch[1];
+
+        const params =
+            funcMatch[2]
+                .split(",")
+                .map(v => v.trim())
+                .filter(v => v);
+
+        let depth = 1;
+        const body = [];
+
+        j++;
+
+        while (
+            j < classLines.length &&
+            depth > 0
+        ) {
+
+            const current =
+                classLines[j].trim();
+
+            if (current.endsWith("{"))
+                depth++;
+
+            if (current === "}") {
+
+                depth--;
+
+                if (depth === 0)
+                    break;
+            }
+
+            if (depth > 0)
+                body.push(classLines[j]);
+
+            j++;
+        }
+
+        cls.methods[methodName] = {
+            params,
+            body: body.join("\n")
+        };
+    }
+}
     }
 
     classes[className] = cls;
@@ -1047,6 +1100,73 @@ if (
         !isNaN(num)
             ? num
             : value;
+
+    continue;
+}
+        const methodCall =
+    line.match(
+        /^call\s+([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\((.*?)\)$/
+    );
+
+if (methodCall) {
+
+    const obj =
+        vars[methodCall[1]];
+
+    if (!obj?.__class__) {
+
+        runtimeError(
+            "Object Error",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const method =
+        obj.__class__.methods[
+            methodCall[2]
+        ];
+
+    if (!method) {
+
+        runtimeError(
+            `Method Error: ${methodCall[2]}`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const localVars = {
+        ...vars,
+        this: obj
+    };
+
+    const args =
+        methodCall[3]
+            .split(",")
+            .map(v => v.trim())
+            .filter(v => v);
+
+    method.params.forEach(
+        (p, index) => {
+
+            localVars[p] =
+                evalExpr(
+                    args[index] ?? "undefined",
+                    vars
+                );
+        }
+    );
+
+    await runSTar(
+        method.body,
+        localVars,
+        lineNumber
+    );
 
     continue;
 }
@@ -1444,6 +1564,26 @@ if (line.startsWith("switch ")) {
     }
 
     i = result.end;
+    continue;
+}
+        const thisAssign =
+    line.match(
+        /^this\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/
+    );
+
+if (thisAssign) {
+
+    if (vars.this) {
+
+        vars.this[
+            thisAssign[1]
+        ] =
+            evalExpr(
+                thisAssign[2],
+                vars
+            );
+    }
+
     continue;
 }
        const objectAssign =
