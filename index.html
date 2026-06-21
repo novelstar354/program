@@ -129,7 +129,7 @@ style="display:none"
     placeholder="ヘルプを検索..."
 >
 <pre>
-STar Language v1.8.4
+STar Language v1.9.3
 
 対応機能
 ・変数
@@ -319,6 +319,19 @@ print p.name
 print p.hp
 
 p.hp = 50
+
+class player{
+    let name = "Novel Star"
+    let hp = 100
+
+    func show(){
+        print this.name
+        print this.hp
+    }
+}
+
+let p = new player()
+(引数でも使えます。)
 
 #入力
 input name
