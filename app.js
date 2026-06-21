@@ -11,7 +11,7 @@ const keys = {};
 let mouseX = 0;
 let mouseY = 0;
 let saveTimer = null;
-
+const classes = {};
 /* =====================================================
 DOM
 ===================================================== */
@@ -701,6 +701,34 @@ if (line.startsWith("func ")) {
 
     continue;
 }
+        if (line.startsWith("class ")) {
+
+    const match =
+        line.match(
+            /^class\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{$/
+        );
+
+    if (!match) {
+        runtimeError(
+            "Syntax Error (class)",
+            lineNumber,
+            line
+        );
+        continue;
+    }
+
+    const className = match[1];
+
+    const result =
+        getBlock(i + 1);
+
+    classes[className] = {
+        body: result.block
+    };
+
+    i = result.end;
+    continue;
+}
         /* =========================
            repeat
         ========================= */
@@ -1072,6 +1100,44 @@ if (
         continue;
     }
 }
+        if (
+    line.startsWith("let ") &&
+    line.includes("new ")
+) {
+
+    const match =
+        line.match(
+            /^let\s+(.+?)\s*=\s*new\s+([a-zA-Z_][a-zA-Z0-9_]*)\(\)$/
+        );
+
+    if (match) {
+
+        const varName = match[1];
+        const className = match[2];
+
+        const cls = classes[className];
+
+        if (!cls) {
+            runtimeError(
+                `Class Error: ${className}`,
+                lineNumber,
+                line
+            );
+            continue;
+        }
+
+        const obj = {};
+
+        await runSTar(
+            cls.body,
+            obj
+        );
+
+        vars[varName] = obj;
+
+        continue;
+    }
+}
         /* =========================
            let
         ========================= */
@@ -1344,7 +1410,30 @@ if (line.startsWith("switch ")) {
     i = result.end;
     continue;
 }
-       
+       const objectAssign =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/
+    );
+
+if (objectAssign) {
+
+    const obj =
+        vars[objectAssign[1]];
+
+    if (
+        obj &&
+        typeof obj === "object"
+    ) {
+
+        obj[objectAssign[2]] =
+            evalExpr(
+                objectAssign[3],
+                vars
+            );
+    }
+
+    continue;
+}
 /*===============================================
     配列再代入
   ===============================================*/
@@ -1488,7 +1577,29 @@ expr = expr.replace(/`([^`]*)`/g, (_, tpl) => {
                 ).toLowerCase()
             )
     );
+/* =========================
+   object.property
+========================= */
 
+expr = expr.replace(
+    /([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\b(?!\s*\()/g,
+    (_, objName, prop) => {
+
+        const obj = vars[objName];
+
+        if (
+            obj &&
+            typeof obj === "object" &&
+            prop in obj
+        ) {
+            return JSON.stringify(
+                obj[prop]
+            );
+        }
+
+        return "undefined";
+    }
+);
     /* =========================
        random(min,max)
     ========================= */
