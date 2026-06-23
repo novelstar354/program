@@ -834,6 +834,77 @@ if (line.startsWith("func ")) {
     continue;
 }
         /* =========================
+   foreach
+========================= */
+if (line.startsWith("foreach ")) {
+
+    const match =
+        line.match(
+            /^foreach\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Syntax Error (foreach)",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const itemVar = match[1];
+    const arrayName = match[2];
+
+    const arr = vars[arrayName];
+
+    if (!Array.isArray(arr)) {
+
+        runtimeError(
+            `${arrayName} is not array`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const result =
+        getBlock(i + 1);
+
+    for (const item of arr) {
+
+    vars[itemVar] = item;
+
+    const loopResult =
+        await runSTar(
+            result.block,
+            vars,
+            lineNumber
+        );
+
+    if (loopResult.__exit__) {
+        return loopResult;
+    }
+
+    if (loopResult.__continue__) {
+
+        delete vars.__continue__;
+        continue;
+    }
+
+    if (loopResult.__break__) {
+
+        delete vars.__break__;
+        break;
+    }
+}
+
+    i = result.end;
+    continue;
+}
+        /* =========================
            repeat
         ========================= */
         if (line.startsWith("repeat ")) {
@@ -878,13 +949,17 @@ if (loopResult.__exit__) {
     return loopResult;
 }
 
-        if (
-            loopResult.__break__
-        ) {
+if (loopResult.__continue__) {
 
-            delete vars.__break__;
-            break;
-        }
+    delete vars.__continue__;
+    continue;
+}
+
+if (loopResult.__break__) {
+
+    delete vars.__break__;
+    break;
+}
     }
 
     i = result.end;
@@ -930,13 +1005,17 @@ if (loopResult.__exit__) {
     return loopResult;
 }
 
-        if (
-            loopResult.__break__
-        ) {
+if (loopResult.__continue__) {
 
-            delete vars.__break__;
-            break;
-        }
+    delete vars.__continue__;
+    continue;
+}
+
+if (loopResult.__break__) {
+
+    delete vars.__break__;
+    break;
+}
     }
 
     i = result.end;
