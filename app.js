@@ -1263,14 +1263,20 @@ if (
 
     const match =
         line.match(
-            /^let\s+(.+?)\s*=\s*new\s+([a-zA-Z_][a-zA-Z0-9_]*)\(\)$/
+            /^let\s+(.+?)\s*=\s*new\s+([a-zA-Z_][a-zA-Z0-9_]*)\((.*?)\)$/
         );
 
     if (match) {
 
         const varName = match[1];
         const className = match[2];
+const argText = match[3];
 
+const args =
+    argText
+        .split(",")
+        .map(v => v.trim())
+        .filter(v => v);
         const cls =
     classes[className];
 
@@ -1298,6 +1304,47 @@ for (const k in cls.fields) {
 }
 
 obj.__class__ = cls;
+        const ctor =
+    cls.methods.constructor;
+
+if (ctor) {
+
+    const localVars = {
+        ...vars,
+        this: obj
+    };
+
+    ctor.params.forEach(
+        (p, index) => {
+
+            const arg =
+                args[index];
+
+            if (
+                arg?.startsWith('"') &&
+                arg?.endsWith('"')
+            ) {
+
+                localVars[p] =
+                    arg.slice(1, -1);
+
+            } else {
+
+                localVars[p] =
+                    evalExpr(
+                        arg ?? "undefined",
+                        vars
+                    );
+            }
+        }
+    );
+
+    await runSTar(
+        ctor.body,
+        localVars,
+        lineNumber
+    );
+}
 
         vars[varName] = obj;
 
