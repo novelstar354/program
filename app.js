@@ -594,6 +594,53 @@ if (line === "break") {
     return vars;
 }
         /* =========================
+   import
+========================= */
+if (line.startsWith("import ")) {
+
+    const match =
+        line.match(
+            /^import\s+"(.+?)"$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Syntax Error (import)",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const fileName = match[1];
+
+    const file =
+        files.find(
+            f => f.name === fileName
+        );
+
+    if (!file) {
+
+        runtimeError(
+            `Import Error: ${fileName}`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    await runSTar(
+        file.content,
+        vars,
+        1
+    );
+
+    continue;
+}
+        /* =========================
            con
         ========================= */
         if (line.startsWith("con ")) {
