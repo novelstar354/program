@@ -129,7 +129,7 @@ style="display:none"
     placeholder="ヘルプを検索..."
 >
 <pre>
-STar Language v2.1.6
+STar Language v2.1.8
 
 対応機能
 ・変数
@@ -413,12 +413,16 @@ switch num{
 }
     
 let nums = [1,2,3,4,5]
-foreach n in nums{
-    print n
 
+foreach n in nums{
     if n == 3{
         continue
     }
+    else{
+        print n
+    }
+
+    
 }
 
 
