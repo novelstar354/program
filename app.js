@@ -1840,6 +1840,29 @@ expr = expr.replace(/`([^`]*)`/g, (_, tpl) => {
                 ).toLowerCase()
             )
     );
+    /* =========================
+   array[index]
+========================= */
+
+expr = expr.replace(
+    /([a-zA-Z_][a-zA-Z0-9_]*)\[(.+?)\]/g,
+    (_, arrName, indexExpr) => {
+
+        const arr = vars[arrName];
+
+        if (!Array.isArray(arr)) {
+            return "undefined";
+        }
+
+        const index = Number(
+            evalExpr(indexExpr, vars)
+        );
+
+        return JSON.stringify(
+            arr[index]
+        );
+    }
+);
 /* =========================
    object.property
 ========================= */
@@ -1941,18 +1964,8 @@ expr = expr.replace(
 
     const value = vars[key];
 
-    if (
-        typeof value === "object" &&
-        value !== null
-    ) {
-        continue;
-    }
-
     expr = expr.replace(
-        new RegExp(
-            `\\b${key}\\b`,
-            "g"
-        ),
+        new RegExp(`\\b${key}\\b`, "g"),
         JSON.stringify(value)
     );
 }
