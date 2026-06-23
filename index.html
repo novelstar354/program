@@ -344,6 +344,20 @@ let p = new player()
 
 call p.show
 
+#コントラクタ
+class player{
+    let name = ""
+    let hp = 0
+
+    func constructor(name,hp){
+
+        this.name = name
+        this.hp = hp
+    }
+}
+
+let palyer = new player("Novel Star",100)
+
 #入力
 input name
 
