@@ -578,6 +578,21 @@ if (line === "break") {
 
     return vars;
 }
+       if (line.startsWith("exit")) {
+
+    const msg =
+        line.substring(4).trim();
+
+    if (msg) {
+        log(
+            evalExpr(msg, vars)
+        );
+    }
+
+    vars.__exit__ = true;
+
+    return vars;
+}
         /* =========================
            con
         ========================= */
@@ -852,15 +867,16 @@ if (!match) {
 
         vars.count = r + 1;
 
-        const loopResult = await runSTar(result.block, vars, lineNumber);
+        const loopResult =
+    await runSTar(
+        result.block,
+        vars,
+        lineNumber
+    );
 
-        if (
-            loopResult.__continue__
-        ) {
-
-            delete vars.__continue__;
-            continue;
-        }
+if (loopResult.__exit__) {
+    return loopResult;
+}
 
         if (
             loopResult.__break__
@@ -903,15 +919,16 @@ if (!match) {
         )
     ) {
 
-        const loopResult = await runSTar(result.block, vars, lineNumber);
+        const loopResult =
+    await runSTar(
+        result.block,
+        vars,
+        lineNumber
+    );
 
-        if (
-            loopResult.__continue__
-        ) {
-
-            delete vars.__continue__;
-            continue;
-        }
+if (loopResult.__exit__) {
+    return loopResult;
+}
 
         if (
             loopResult.__break__
@@ -933,100 +950,128 @@ if (line === "continue") {
     continue;
 }
         /* =========================
-           if / eif / else
-        ========================= */
-        if (line.startsWith("if ")) {
+   if / eif / else
+========================= */
+if (line.startsWith("if ")) {
 
-            let executed = false;
+    let executed = false;
 
-            const match =
-                line.match(/^if\s+(.+?)\s*\{$/);
+    const match =
+        line.match(
+            /^if\s+(.+?)\s*\{$/
+        );
 
-            if (!match) {
-                log("Syntax Error: if");
-                continue;
-            }
+    if (!match) {
 
-            const result =
-                getBlock(i + 1);
+        runtimeError(
+            "Syntax Error (if)",
+            lineNumber,
+            line
+        );
 
-            if (
-                evalExpr(
-                    match[1],
-                    vars
-                )
-            ) {
+        continue;
+    }
 
-                executed = true;
+    const result =
+        getBlock(i + 1);
 
-                await runSTar(
-                    result.block,
-                    vars
-                );
-            }
+    if (
+        evalExpr(
+            match[1],
+            vars
+        )
+    ) {
 
-            i = result.end;
+        executed = true;
 
-            while (
-                i + 1 < lines.length &&
-                lines[i + 1].trim().startsWith("eif ")
-            ) {
+        const r =
+            await runSTar(
+                result.block,
+                vars,
+                lineNumber
+            );
 
-                i++;
-
-                const eifLine =
-                    lines[i].trim();
-
-                const eifMatch =
-                    eifLine.match(
-                        /^eif\s+(.+?)\s*\{$/
-                    );
-
-                const eifResult =
-                    getBlock(i + 1);
-
-                if (
-                    !executed &&
-                    evalExpr(
-                        eifMatch[1],
-                        vars
-                    )
-                ) {
-
-                    executed = true;
-
-                    await runSTar(
-                        eifResult.block,
-                        vars
-                    );
-                }
-
-                i = eifResult.end;
-            }
-
-            if (
-                i + 1 < lines.length &&
-                lines[i + 1].trim() === "else{"
-            ) {
-
-                i++;
-
-                const elseResult =
-                    getBlock(i + 1);
-
-                if (!executed) {
-
-                    await runSTar(
-                        elseResult.block,
-                        vars
-                    );
-                }
-
-                i = elseResult.end;
-            }
-
-            continue;
+        if (r.__exit__) {
+            return r;
         }
+    }
+
+    i = result.end;
+
+    while (
+        i + 1 < lines.length &&
+        lines[i + 1]
+            .trim()
+            .startsWith("eif ")
+    ) {
+
+        i++;
+
+        const eifLine =
+            lines[i].trim();
+
+        const eifMatch =
+            eifLine.match(
+                /^eif\s+(.+?)\s*\{$/
+            );
+
+        const eifResult =
+            getBlock(i + 1);
+
+        if (
+            !executed &&
+            evalExpr(
+                eifMatch[1],
+                vars
+            )
+        ) {
+
+            executed = true;
+
+            const r =
+                await runSTar(
+                    eifResult.block,
+                    vars,
+                    lineNumber
+                );
+
+            if (r.__exit__) {
+                return r;
+            }
+        }
+
+        i = eifResult.end;
+    }
+
+    if (
+        i + 1 < lines.length &&
+        lines[i + 1].trim() === "else{"
+    ) {
+
+        i++;
+
+        const elseResult =
+            getBlock(i + 1);
+
+        if (!executed) {
+
+            const r =
+                await runSTar(
+                    elseResult.block,
+                    vars,
+                    lineNumber
+                );
+
+            if (r.__exit__) {
+                return r;
+            }
+        }
+
+        i = elseResult.end;
+    }
+
+    continue;
+}
 /* =========================
    input
 ========================= */
@@ -1507,10 +1552,14 @@ if (line.startsWith("call ")) {
     );
 
     const result =
-        await runSTar(
-            func.body,
-            localVars
-        );
+    await runSTar(
+        func.body,
+        localVars
+    );
+
+if (result.__exit__) {
+    return result;
+}
 
     vars.__return__ =
         result.__return__;
