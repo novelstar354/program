@@ -215,6 +215,14 @@ let items = ["sword","shield","potion"]
 let id = random(0,2)
 print items[id]
 
+#全配列取り出し
+let items = ["剣","盾","薬"]
+foreach item in items{
+    print item
+}
+
+(計算,break,continueも対応しています。)
+
 #演算
 y = 5 + 2
 y = 5 - 3
@@ -386,6 +394,33 @@ input user "ユーザー名" = "guest"
 input score "点数" = score
 
 input y "入力" = x + 5
+
+#スキップ
+break: 処理した場合{}内の処理を終了します。
+continue: 処理した場合{}内の処理をスキップします。
+
+let num = 1
+switch num{
+    case 1:
+        print num
+        break
+    case 2:
+        print num
+        break
+    deafult:
+        print "error"
+        break
+}
+    
+let nums = [1,2,3,4,5]
+foreach n in nums{
+    print n
+
+    if n == 3{
+        continue
+    }
+}
+
 
 #強制停止
 exit
