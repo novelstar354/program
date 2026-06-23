@@ -129,7 +129,7 @@ style="display:none"
     placeholder="ヘルプを検索..."
 >
 <pre>
-STar Language v2.1.5
+STar Language v2.1.6
 
 対応機能
 ・変数
@@ -141,6 +141,7 @@ STar Language v2.1.5
 ・入力
 ・ランダム
 ・クリア
+・終了
 ・時間
 ・クラス
 
@@ -385,6 +386,12 @@ input user "ユーザー名" = "guest"
 input score "点数" = score
 
 input y "入力" = x + 5
+
+#強制停止
+exit
+exit "Game Over"
+exit `${name}は倒れた。
+(exitを処理した場合、プログラム全体が止まります。)
 
 #コメントアウト
 #コメント
