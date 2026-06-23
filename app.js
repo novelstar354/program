@@ -1384,47 +1384,62 @@ if (ctor) {
         }
         if (line.includes(".push(")) {
 
-    const match =
+    const pushMatch =
         line.match(
-            /^([a-zA-Z_][a-zA-Z0-9_]*)\.push\((.+)\)$/
+            /^([a-zA-Z_][a-zA-Z0-9_]*)\.push\((.*?)\)$/
         );
 
-    if (match) {
+    if (pushMatch) {
 
-        const arr =
-            vars[match[1]];
+        const arr = vars[pushMatch[1]];
 
-        if (Array.isArray(arr)) {
+        if (!Array.isArray(arr)) {
 
-            arr.push(
-                evalExpr(
-                    match[2],
-                    vars
-                )
+            runtimeError(
+                `${pushMatch[1]} is not array`,
+                lineNumber,
+                line
             );
+
+            continue;
         }
+
+        arr.push(
+            evalExpr(
+                pushMatch[2],
+                vars
+            )
+        );
+
+        continue;
     }
+} 
+if (line.endsWith(".pop()")) {
+
+    const popMatch =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\.pop\(\)$/
+    );
+
+if (popMatch) {
+
+    const arr = vars[popMatch[1]];
+
+    if (!Array.isArray(arr)) {
+
+        runtimeError(
+            `${popMatch[1]} is not array`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    arr.pop();
 
     continue;
 }
-if (line.endsWith(".pop()")) {
-
-    const match =
-        line.match(
-            /^([a-zA-Z_][a-zA-Z0-9_]*)\.pop\(\)$/
-        );
-
-    if (match) {
-
-        const arr =
-            vars[match[1]];
-
-        if (Array.isArray(arr)) {
-            arr.pop();
-        }
-    }
-
-    continue;
 }
 /* =========================
    call
