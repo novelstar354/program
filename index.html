@@ -423,6 +423,29 @@ foreach n in nums{
 
     
 }
+#例外処理
+try{
+    print "開始"
+
+    import "test.star"
+
+    print "成功"
+}
+catch{
+    print "エラーが発生しました"
+}
+
+(try内でエラーが発生した場合、catch内が実行されます。)
+
+#エラー取得
+try{
+    import "config.star"
+}
+catch(err){
+    print err
+}
+
+(errにはエラーメッセージが入ります。)
 
 #インポート
 import "config.star"
