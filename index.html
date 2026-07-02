@@ -176,6 +176,11 @@ print "Score: " + score
 let dice = random(1,6)
 print dice
 
+#最大・最小
+print min(10,20)
+
+print max(10,20)
+
 #遅延
 wait 500
 (ミリ秒で表記。)
@@ -267,6 +272,14 @@ repeat 5{
 (回数には変数を利用できます。)
 (break,continueが使えます。)
 
+#条件付き繰り返し
+let count = 5
+    
+repeat until count<=0{
+    print count
+    count = count -1
+}
+
 # 条件分岐
 if true {
     print "YES"
@@ -306,6 +319,14 @@ clear
 # 関数
 func hello() {
     print "Hello"
+}
+
+#最後に実行
+func hello(){
+    defer{
+        print "終了"
+    }
+    print "hello"
 }
 
 #return
