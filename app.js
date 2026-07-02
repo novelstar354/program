@@ -2225,25 +2225,81 @@ expr = expr.replace(
     }
 );
     expr = expr.replace(
-    /min\((.+?),(.+?)\)/g,
-    (_,a,b)=>{
+    /min\((.*?)\)/g,
+    (_, args) => {
+
+        const list = args
+            .split(",")
+            .map(v => evalExpr(v.trim(), vars));
+
+        if (
+            list.length === 1 &&
+            Array.isArray(list[0])
+        ) {
+            return Math.min(...list[0]);
+        }
 
         return Math.min(
-            Number(evalExpr(a,vars)),
-            Number(evalExpr(b,vars))
+            ...list.map(Number)
         );
+    }
+);
+  expr = expr.replace(
+    /max\((.*?)\)/g,
+    (_, args) => {
 
+        const list = args
+            .split(",")
+            .map(v => evalExpr(v.trim(), vars));
+
+        if (
+            list.length === 1 &&
+            Array.isArray(list[0])
+        ) {
+            return Math.max(...list[0]);
+        }
+
+        return Math.max(
+            ...list.map(Number)
+        );
     }
 );
     expr = expr.replace(
-    /max\((.+?),(.+?)\)/g,
-    (_,a,b)=>{
+    /sum\((.*?)\)/g,
+    (_, arg) => {
 
-        return Math.max(
-            Number(evalExpr(a,vars)),
-            Number(evalExpr(b,vars))
+        const value =
+            evalExpr(arg.trim(), vars);
+
+        if (!Array.isArray(value))
+            return 0;
+
+        return value.reduce(
+            (a, b) => Number(a) + Number(b),
+            0
         );
+    }
+);
+    expr = expr.replace(
+    /avg\((.*?)\)/g,
+    (_, arg) => {
 
+        const value =
+            evalExpr(arg.trim(), vars);
+
+        if (
+            !Array.isArray(value) ||
+            value.length === 0
+        )
+            return 0;
+
+        const total =
+            value.reduce(
+                (a, b) => Number(a) + Number(b),
+                0
+            );
+
+        return total / value.length;
     }
 );
     expr = expr.replace(
