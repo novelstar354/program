@@ -238,7 +238,12 @@ body{
     cursor:pointer;
     transition:.2s;
 }
-
+.file.active{
+    background:rgba(56,189,248,.18);
+    border-left:4px solid #38bdf8;
+    color:#38bdf8;
+    font-weight:bold;
+}
 .file:hover{
     background:rgba(56,189,248,.15);
     transform:translateX(5px);
@@ -492,20 +497,120 @@ body{
    MOBILE
 ===================================================== */
 
-@media(max-width:900px){
-    #sidebar{ display:none; }
+@media (max-width:900px){
 
-    #workspace{
+    /* ヘッダー */
+    #topbar{
+        height:auto;
+        padding:10px;
         flex-direction:column;
-    }
-
-    #bottomPanel{
-        height:180px;
+        align-items:stretch;
+        gap:10px;
     }
 
     .brand{
+        font-size:18px;
+        text-align:center;
+    }
+
+    .toolbar{
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:8px;
+    }
+
+    .toolbar button{
+        width:100%;
+        padding:12px;
         font-size:15px;
     }
+
+    /* ワークスペース */
+    #workspace{
+        flex-direction:column;
+        height:calc(100vh - 320px);
+    }
+
+    /* サイドバー */
+    #fileSidebar{
+        width:100%;
+        min-width:100%;
+        max-width:none;
+        height:180px;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+    }
+
+    #sidebarResizer{
+        display:none;
+    }
+
+    /* エディタ */
+    #editorArea{
+        flex:1;
+        min-height:300px;
+    }
+
+    #editor{
+        min-height:300px;
+    }
+
+    /* タブ */
+    #tabs{
+        height:44px;
+        overflow-x:auto;
+        overflow-y:hidden;
+        white-space:nowrap;
+    }
+
+    .tab{
+        flex-shrink:0;
+    }
+
+    /* Console */
+    #bottomPanel{
+        height:160px;
+    }
+
+    /* ヘルプ */
+    #helpPanel{
+        width:100%;
+    }
+
+    #helpContent{
+        padding:15px;
+    }
+
+    #helpContent pre{
+        font-size:13px;
+    }
+
+    /* ファイル一覧 */
+    .file{
+        padding:14px;
+        font-size:15px;
+    }
+
+    .renameBtn{
+        padding:8px 12px;
+    }
+
+    /* スクロールを滑らかに */
+    *{
+        -webkit-overflow-scrolling:touch;
+    }
+
+}
+@media (max-width:900px){
+
+    .monaco-editor{
+        font-size:18px !important;
+    }
+
+    .monaco-editor textarea{
+        font-size:18px !important;
+    }
+
 }
 #helpSearch{
     width:100%;
