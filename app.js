@@ -526,7 +526,7 @@ STar Runtime
 ===================================================== */
 
 async function runSTar(code, vars = {}, baseLine = 1) {
-
+const deferBlocks = [];
     const lines = code.split("\n");
 
     function getBlock(startIndex) {
@@ -666,6 +666,21 @@ if (line.startsWith("try")) {
         }
 
     }
+
+    continue;
+}
+    /* =========================
+   defer
+========================= */
+
+if(line.startsWith("defer")){
+
+    const result =
+        getBlock(i+1);
+
+    deferBlocks.push(result.block);
+
+    i=result.end;
 
     continue;
 }
@@ -1026,6 +1041,70 @@ if (line.startsWith("foreach ")) {
 
     i = result.end;
     continue;
+}
+        /* =========================
+   repeat until
+========================= */
+
+if(line.startsWith("repeat until ")){
+
+    const match =
+        line.match(
+            /^repeat\s+until\s+(.+?)\s*\{$/
+        );
+
+    if(!match){
+
+        runtimeError(
+            "Syntax Error (repeat until)",
+            lineNumber,
+            line
+        );
+
+        continue;
+
+    }
+
+    const result =
+        getBlock(i+1);
+
+    while(
+        !evalExpr(
+            match[1],
+            vars
+        )
+    ){
+
+        const loopResult =
+            await runSTar(
+                result.block,
+                vars,
+                lineNumber
+            );
+
+        if(loopResult.__exit__)
+            return loopResult;
+
+        if(loopResult.__continue__){
+
+            delete vars.__continue__;
+            continue;
+
+        }
+
+        if(loopResult.__break__){
+
+            delete vars.__break__;
+            break;
+
+        }
+
+    }
+
+    i=result.end;
+
+    continue;
+
 }
         /* =========================
            repeat
@@ -2013,7 +2092,15 @@ if (arrayAssign) {
             vars[key] = value;
         }
     }
+    for(let d=deferBlocks.length-1; d>=0; d--){
 
+    await runSTar(
+        deferBlocks[d],
+        vars,
+        baseLine
+    );
+
+}
     return vars;
 }
 
@@ -2135,6 +2222,38 @@ expr = expr.replace(
         }
 
         return "undefined";
+    }
+);
+    expr = expr.replace(
+    /min\((.+?),(.+?)\)/g,
+    (_,a,b)=>{
+
+        return Math.min(
+            Number(evalExpr(a,vars)),
+            Number(evalExpr(b,vars))
+        );
+
+    }
+);
+    expr = expr.replace(
+    /max\((.+?),(.+?)\)/g,
+    (_,a,b)=>{
+
+        return Math.max(
+            Number(evalExpr(a,vars)),
+            Number(evalExpr(b,vars))
+        );
+
+    }
+);
+    expr = expr.replace(
+    /abs\((.+?)\)/g,
+    (_,x)=>{
+
+        return Math.abs(
+            Number(evalExpr(x,vars))
+        );
+
     }
 );
     /* =========================
