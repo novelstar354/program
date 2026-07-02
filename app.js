@@ -594,6 +594,82 @@ if (line === "break") {
     return vars;
 }
         /* =========================
+   try / catch
+========================= */
+
+if (line.startsWith("try")) {
+
+    const tryBlock = getBlock(i + 1);
+
+    i = tryBlock.end;
+
+    let catchBlock = null;
+    let errorName = null;
+
+    if (i + 1 < lines.length) {
+
+        const next = lines[i + 1].trim();
+
+        const match =
+            next.match(
+                /^catch(?:\((.*?)\))?\{$/
+            );
+
+        if (match) {
+
+            errorName = match[1];
+
+            i++;
+
+            catchBlock =
+                getBlock(i + 1);
+
+        }
+
+    }
+
+    try {
+
+        await runSTar(
+            tryBlock.block,
+            vars,
+            lineNumber
+        );
+
+    }
+    catch (err) {
+
+        if (catchBlock) {
+
+            const localVars = {
+                ...vars
+            };
+
+            if (errorName) {
+                localVars[errorName] =
+                    err.message;
+            }
+
+            await runSTar(
+                catchBlock.block,
+                localVars,
+                lineNumber
+            );
+
+            i = catchBlock.end;
+
+        }
+        else {
+
+            throw err;
+
+        }
+
+    }
+
+    continue;
+}
+        /* =========================
    import
 ========================= */
 if (line.startsWith("import ")) {
@@ -2417,10 +2493,14 @@ helpPanel.classList.remove(
 };
 */
 function runtimeError(msg, line, raw) {
-    log(`[Line ${line}] ${msg}`);
-    if (raw !== undefined) {
-        log(`→ ${raw}`);
-    }
+
+    const err = {
+        message: msg,
+        line,
+        raw
+    };
+
+    throw err;
 }
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
