@@ -228,7 +228,11 @@ print name`,
             minimap: { enabled: true }
         }
     );
+editor.onDidChangeModelContent(() => {
+    updateOutline();
+});
 
+updateOutline();
     attachEditorEvents(); // ← これだけ
 });
 
@@ -2790,3 +2794,150 @@ editorArea.addEventListener(
         reader.readAsText(file);
     }
 );
+function updateOutline(){
+
+    const code = editor.getValue();
+
+    const lines = code.split("\n");
+
+    const classes=[];
+    const vars=[];
+    const arrays=[];
+    const cons=[];
+    const funcs=[];
+
+    lines.forEach((line,index)=>{
+
+        let m;
+
+        m=line.match(/^class\s+(\w+)/);
+
+        if(m){
+
+            classes.push({
+                name:m[1],
+                line:index+1
+            });
+
+        }
+
+        m=line.match(/^func\s+(\w+)/);
+
+        if(m){
+
+            funcs.push({
+                name:m[1],
+                line:index+1
+            });
+
+        }
+
+        m=line.match(/^let\s+(\w+)\s*=\s*\[/);
+
+        if(m){
+
+            arrays.push({
+                name:m[1],
+                line:index+1
+            });
+
+        }
+
+        m=line.match(/^let\s+(\w+)/);
+
+        if(m && !line.includes("[")){
+
+            vars.push({
+                name:m[1],
+                line:index+1
+            });
+
+        }
+
+        m=line.match(/^con\s+(\w+)/);
+
+        if(m){
+
+            cons.push({
+                name:m[1],
+                line:index+1
+            });
+
+        }
+
+    });
+
+    renderOutline("classList",classes);
+
+    renderOutline("varList",vars);
+
+    renderOutline("arrayList",arrays);
+
+    renderOutline("constList",cons);
+
+    renderOutline("funcList",funcs);
+    document.querySelector('[data-name="Classes"]').innerHTML =
+`▼ Classes (${classes.length})`;
+
+document.querySelector('[data-name="Variables"]').innerHTML =
+`▼ Variables (${vars.length})`;
+
+document.querySelector('[data-name="Arrays"]').innerHTML =
+`▼ Arrays (${arrays.length})`;
+
+document.querySelector('[data-name="Constants"]').innerHTML =
+`▼ Constants (${cons.length})`;
+
+document.querySelector('[data-name="Functions"]').innerHTML =
+`▼ Functions (${funcs.length})`;
+
+}
+function renderOutline(id,list){
+
+    const div=document.getElementById(id);
+
+    div.innerHTML="";
+
+    list.forEach(item=>{
+
+        const e=document.createElement("div");
+
+        e.className="outlineItem";
+
+        e.textContent=item.name;
+
+        e.onclick=()=>{
+
+            editor.revealLineInCenter(item.line);
+
+            editor.setPosition({
+                lineNumber:item.line,
+                column:1
+            });
+
+            editor.focus();
+
+        };
+
+        div.appendChild(e);
+
+    });
+
+}
+editor.onDidChangeModelContent(()=>{
+
+    updateOutline();
+
+});
+function toggleOutline(title){
+
+    const content = title.nextElementSibling;
+
+    const opened =
+        !content.classList.toggle("closed");
+
+    title.innerHTML =
+        (opened ? "▼ " : "▶ ") +
+        title.dataset.name;
+
+}
