@@ -2879,20 +2879,20 @@ if (m) {
     renderOutline("constList",cons);
 
     renderOutline("funcList",funcs);
-    document.querySelector('[data-name="Classes"]').innerHTML =
-`▼ Classes (${classes.length})`;
+    document.querySelector('[data-name="Classes"]').textContent =
+`Classes (${classes.length})`;
 
-document.querySelector('[data-name="Variables"]').innerHTML =
-`▼ Variables (${vars.length})`;
+document.querySelector('[data-name="Variables"]').textContent =
+`Variables (${varList.length})`;
 
-document.querySelector('[data-name="Arrays"]').innerHTML =
-`▼ Arrays (${arrays.length})`;
+document.querySelector('[data-name="Arrays"]').textContent =
+`Arrays (${arrays.length})`;
 
-document.querySelector('[data-name="Constants"]').innerHTML =
-`▼ Constants (${cons.length})`;
+document.querySelector('[data-name="Constants"]').textContent =
+`Constants (${cons.length})`;
 
-document.querySelector('[data-name="Functions"]').innerHTML =
-`▼ Functions (${funcs.length})`;
+document.querySelector('[data-name="Functions"]').textContent =
+`Functions (${funcs.length})`;
 
 }
 function renderOutline(id,list){
@@ -2930,20 +2930,17 @@ function renderOutline(id,list){
     });
 
 }
-editor.onDidChangeModelContent(()=>{
 
-    updateOutline();
-
-});
-function toggleOutline(title){
+function toggleOutline(title) {
 
     const content = title.nextElementSibling;
 
-    const opened =
-        !content.classList.toggle("closed");
+    // 常に開く
+    content.classList.remove("closed");
 
-    title.innerHTML =
-        (opened ? "▼ " : "▶ ") +
-        title.dataset.name;
+    const count =
+        content.querySelectorAll(".outlineItem").length;
 
+    title.textContent =
+        `▼ ${title.dataset.name} (${count})`;
 }
