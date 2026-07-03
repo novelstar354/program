@@ -2832,38 +2832,41 @@ function updateOutline(){
 
         }
 
-        m=line.match(/^let\s+(\w+)\s*=\s*\[/);
+        m = line.match(/^let\s+(\w+)\s*=\s*(\[.*)$/);
 
-        if(m){
+if (m) {
 
-            arrays.push({
-                name:m[1],
-                line:index+1
-            });
+    arrays.push({
+        name: m[1],
+        value: m[2].trim(),
+        line: index + 1
+    });
 
-        }
+}
 
-        m=line.match(/^let\s+(\w+)/);
+        m = line.match(/^let\s+(\w+)\s*=\s*(.+)$/);
 
-        if(m && !line.includes("[")){
+if (m && !m[2].trim().startsWith("[")) {
 
-            vars.push({
-                name:m[1],
-                line:index+1
-            });
+    vars.push({
+        name: m[1],
+        value: m[2].trim(),
+        line: index + 1
+    });
 
-        }
+}
 
-        m=line.match(/^con\s+(\w+)/);
+        m = line.match(/^con\s+(\w+)\s*=\s*(.+)$/);
 
-        if(m){
+if (m) {
 
-            cons.push({
-                name:m[1],
-                line:index+1
-            });
+    cons.push({
+        name: m[1],
+        value: m[2].trim(),
+        line: index + 1
+    });
 
-        }
+}
 
     });
 
@@ -2904,7 +2907,10 @@ function renderOutline(id,list){
 
         e.className="outlineItem";
 
-        e.textContent=item.name;
+        e.textContent =
+    item.value !== undefined
+        ? `${item.name} = ${item.value}`
+        : item.name;
 
         e.onclick=()=>{
 
