@@ -129,15 +129,7 @@ function waitEditorReady() {
     const timer = setInterval(() => {
         if (editor) {
             clearInterval(timer);
-
-            editor.onDidChangeModelContent(() => {
-                clearTimeout(saveTimer);
-
-                saveTimer = setTimeout(() => {
-                    saveCurrentFile();
-                    saveFiles();
-                }, 500);
-            });
+            attachEditorEvents();
         }
     }, 50);
 }
@@ -215,8 +207,7 @@ require(["vs/editor/editor.main"], () => {
     editor = monaco.editor.create(
         document.getElementById("editor"),
         {
-            value:
-`print "Hello STar"
+            value: activeFile?.content || `print "Hello STar"
 
 let name = "World"
 
@@ -228,30 +219,45 @@ print name`,
             minimap: { enabled: true }
         }
     );
+    if (activeFile) {
+    editor.setValue(activeFile.content || "");
+}
 editor.onDidChangeModelContent(() => {
     updateOutline();
 });
 
 updateOutline();
-    attachEditorEvents(); // ← これだけ
+
 });
-
 }
+
 function initFiles() {
-const saved = JSON.parse(localStorage.getItem("star_files") || "[]");
+    let saved = [];
 
-files = saved;
+    try {
+        saved = JSON.parse(
+            localStorage.getItem("star_files") || "[]"
+        );
+    } catch (e) {
+        console.warn(
+            "保存データの読み込みに失敗しました",
+            e
+        );
+    }
 
-if (files.length === 0) {
-    files = [{
-        id: crypto.randomUUID(),
-        name: "main.star",
-        content: ""
-    }];
-}
+    files = Array.isArray(saved) ? saved : [];
 
-activeFile = files[0];
+    if (files.length === 0) {
+        files = [{
+            id: crypto.randomUUID(),
+            name: "main.star",
+            content: ""
+        }];
 
+        saveFiles();
+    }
+
+    activeFile = files[0];
 }
 /* =====================================================
 FILE
@@ -343,9 +349,18 @@ FILE SYSTEM (STar IDE)
 let files = JSON.parse(localStorage.getItem("star_files") || "[]");
 let activeFile = null;
 
-/* 保存 */
 function saveFiles() {
-localStorage.setItem("star_files", JSON.stringify(files));
+    try {
+        localStorage.setItem(
+            "star_files",
+            JSON.stringify(files)
+        );
+    } catch (e) {
+        console.error(
+            "ファイルの自動保存に失敗しました",
+            e
+        );
+    }
 }
 
 /* 新規作成 */
@@ -371,36 +386,38 @@ if (!editor) return;
     renderTree();
 }
 
-/* 開く */
 function openFile(id) {
-const file = files.find(f => f.id === id);
-if (!file) return;
+    const file = files.find(f => f.id === id);
+    if (!file) return;
 
-saveCurrentFile();
+    saveCurrentFile();
 
-activeFile = file;
-editor.setValue(file.content);
+    activeFile = file;
 
-renderTabs();
-renderTree();
+    if (editor) {
+        editor.setValue(
+            activeFile.content || ""
+        );
+    }
 
+    renderTabs();
+    renderTree();
 }
 
 function saveCurrentFile() {
-if (!activeFile || !editor) return;
+    if (!activeFile || !editor) return;
 
-// エディタ内容を現在のファイルへ保存
-activeFile.content = editor.getValue();
+    activeFile.content = editor.getValue();
 
-// files全体を更新（重要）
-const index = files.findIndex(f => f.id === activeFile.id);
-if (index !== -1) {
-    files[index] = activeFile;
-}
+    const index = files.findIndex(
+        f => f.id === activeFile.id
+    );
 
-// localStorageへ保存
-localStorage.setItem("star_files", JSON.stringify(files));
+    if (index !== -1) {
+        files[index].content = activeFile.content;
+    }
 
+    saveFiles();
 }
 /* 名前変更 */
 function renameFile(id, newName) {
@@ -475,13 +492,21 @@ function renderTree() {
 function attachEditorEvents() {
     if (!editor) return;
 
+    if (editor.__starAutoSaveAttached) return;
+    editor.__starAutoSaveAttached = true;
+
     editor.onDidChangeModelContent(() => {
+        if (!activeFile) return;
+
         clearTimeout(saveTimer);
 
         saveTimer = setTimeout(() => {
             saveCurrentFile();
-            saveFiles();
         }, 500);
+    });
+
+    window.addEventListener("beforeunload", () => {
+        saveCurrentFile();
     });
 }
     
@@ -2485,15 +2510,44 @@ runBtn.onclick = async () => {
 
     clearConsole();
 
+    if (!editor) {
+        log("Editor is not ready.");
+        return;
+    }
+
     saveCurrentFile();
 
     for (const k in functions) {
         delete functions[k];
     }
 
-    await runSTar(
-        editor.getValue()
-    );
+    try {
+
+        await runSTar(
+            editor.getValue()
+        );
+
+    } catch (err) {
+
+        if (
+            err &&
+            typeof err === "object" &&
+            err.lineNumber !== undefined
+        ) {
+
+            logError(err);
+
+        } else {
+
+            log(
+                `[Runtime Error] ${
+                    err?.message || String(err)
+                }`
+            );
+
+            console.error(err);
+        }
+    }
 };
 
 saveBtn.onclick = saveFile;
@@ -2674,9 +2728,9 @@ helpPanel.classList.remove(
 function runtimeError(msg, line, raw) {
 
     const err = {
-        message: msg,
-        line,
-        raw
+        error: msg,
+        lineNumber: line,
+        raw: raw
     };
 
     throw err;
@@ -2883,7 +2937,7 @@ if (m) {
 `Classes (${classes.length})`;
 
 document.querySelector('[data-name="Variables"]').textContent =
-`Variables (${varList.length})`;
+`Variables (${vars.length})`;
 
 document.querySelector('[data-name="Arrays"]').textContent =
 `Arrays (${arrays.length})`;
