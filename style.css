@@ -823,3 +823,267 @@ body{
     max-height:0;
 
 }
+/* =====================================================
+   SEARCH / REPLACE
+===================================================== */
+
+#searchPanel {
+    display: none;
+
+    position: absolute;
+
+    top: 10px;
+    right: 20px;
+
+    width: 480px;
+
+    padding: 12px;
+
+    background: rgba(15, 23, 42, 0.96);
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.45);
+
+    z-index: 1000;
+
+    backdrop-filter: blur(12px);
+}
+
+#searchPanel.open {
+    display: block;
+}
+
+.searchRow,
+.replaceRow {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-bottom: 8px;
+}
+
+#searchInput,
+#replaceInput {
+
+    flex: 1;
+
+    min-width: 0;
+
+    height: 34px;
+
+    box-sizing: border-box;
+
+    padding: 0 10px;
+
+    border-radius: 6px;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    background: rgba(0,0,0,0.35);
+
+    color: white;
+
+    outline: none;
+
+    font-family: monospace;
+
+    font-size: 14px;
+}
+
+#searchInput:focus,
+#replaceInput:focus {
+
+    border-color: #38bdf8;
+
+    box-shadow:
+        0 0 0 2px rgba(56,189,248,0.15);
+}
+
+#searchPanel button {
+
+    height: 34px;
+
+    padding: 0 10px;
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    border-radius: 6px;
+
+    background: rgba(255,255,255,0.08);
+
+    color: white;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+#searchPanel button:hover {
+
+    background: rgba(255,255,255,0.16);
+}
+
+#findPrevBtn,
+#findNextBtn {
+
+    width: 34px;
+
+    padding: 0 !important;
+
+    font-size: 17px;
+}
+
+#replaceAllBtn {
+
+    background: rgba(56,189,248,0.15);
+}
+
+#replaceAllBtn:hover {
+
+    background: rgba(56,189,248,0.25);
+}
+
+#searchCount {
+
+    min-width: 55px;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    color: #aaa;
+}
+
+.searchOptions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    font-size: 12px;
+
+    color: #bbb;
+}
+
+.searchOptions label {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 4px;
+
+    cursor: pointer;
+
+    user-select: none;
+}
+
+.searchOptions input {
+
+    accent-color: #38bdf8;
+
+    cursor: pointer;
+}
+
+#closeSearchBtn {
+
+    margin-left: auto;
+
+    width: 32px;
+
+    padding: 0 !important;
+
+    font-size: 15px;
+}
+
+/* =====================================================
+   LIGHT THEME
+===================================================== */
+
+body.light #searchPanel {
+
+    background: rgba(255,255,255,0.97);
+
+    border-color: rgba(0,0,0,0.15);
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.2);
+}
+
+body.light #searchInput,
+body.light #replaceInput {
+
+    background: rgba(0,0,0,0.05);
+
+    color: #111;
+
+    border-color: rgba(0,0,0,0.15);
+}
+
+body.light #searchPanel button {
+
+    color: #111;
+
+    background: rgba(0,0,0,0.06);
+
+    border-color: rgba(0,0,0,0.15);
+}
+
+body.light .searchOptions {
+
+    color: #555;
+}
+
+/* =====================================================
+   SEARCH PANEL MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    #searchPanel {
+
+        left: 10px;
+
+        right: 10px;
+
+        top: 10px;
+
+        width: auto;
+    }
+
+    .searchOptions {
+
+        flex-wrap: wrap;
+    }
+
+}
+
+/* =====================================================
+   STar IDE Search Highlight
+===================================================== */
+
+/* 通常の検索結果 */
+.monaco-editor .star-search-match {
+    background: rgba(255, 215, 0, 0.25);
+    border-radius: 3px;
+    box-shadow:
+        0 0 0 1px rgba(255, 215, 0, 0.45);
+}
+
+/* 現在選択されている検索結果 */
+.monaco-editor .star-search-current {
+    background: rgba(0, 229, 255, 0.45);
+    border-radius: 3px;
+
+    box-shadow:
+        0 0 0 1px #00e5ff,
+        0 0 8px rgba(0, 229, 255, 0.8);
+}
