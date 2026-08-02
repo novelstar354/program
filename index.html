@@ -62,7 +62,7 @@
 </button>
 
 
-
+<button id="shortcutBtn">ショートカット</button>
         <button id="helpBtn">使い方</button>
 
 
@@ -271,7 +271,7 @@ style="display:none"
     placeholder="ヘルプを検索..."
 >
 <pre>
-STar Language v2.3.8
+STar Language v2.7.5
 
 対応機能
 ・変数
@@ -635,6 +635,155 @@ exit `${name}は倒れた。
 #コメントアウト
 #コメント
 </pre>
+
+    </div>
+
+</div>
+<div id="shortcutPanel">
+
+    <div id="shortcutHeader">
+        <h2>Keyboard Shortcuts</h2>
+
+        <button id="closeShortcut">
+            ✕
+        </button>
+    </div>
+
+    <div id="shortcutContent">
+
+        <div class="shortcutSection">
+            <h3>検索・置換</h3>
+
+            <div class="shortcutRow">
+                <span>検索</span>
+                <kbd>Ctrl</kbd> + <kbd>F</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>置換</span>
+                <kbd>Ctrl</kbd> + <kbd>H</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>次の検索結果</span>
+                <kbd>Enter</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>前の検索結果</span>
+                <kbd>Shift</kbd> + <kbd>Enter</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>検索パネルを閉じる</span>
+                <kbd>Esc</kbd>
+            </div>
+        </div>
+
+
+        <div class="shortcutSection">
+            <h3>ファイル</h3>
+
+            <div class="shortcutRow">
+                <span>保存</span>
+                <kbd>Ctrl</kbd> + <kbd>S</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>新規ファイル</span>
+                <kbd>Ctrl</kbd> + <kbd>N</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>ファイルを閉じる</span>
+                <kbd>Ctrl</kbd> + <kbd>W</kbd>
+            </div>
+        </div>
+
+
+        <div class="shortcutSection">
+            <h3>▶ 実行</h3>
+
+            <div class="shortcutRow">
+                <span>プログラム実行</span>
+                <kbd>F5</kbd>
+            </div>
+        </div>
+
+
+        <div class="shortcutSection">
+            <h3>編集</h3>
+
+            <div class="shortcutRow">
+                <span>元に戻す</span>
+                <kbd>Ctrl</kbd> + <kbd>Z</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>やり直す</span>
+                <kbd>Ctrl</kbd> + <kbd>Y</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>コピー</span>
+                <kbd>Ctrl</kbd> + <kbd>C</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>切り取り</span>
+                <kbd>Ctrl</kbd> + <kbd>X</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>貼り付け</span>
+                <kbd>Ctrl</kbd> + <kbd>V</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>すべて選択</span>
+                <kbd>Ctrl</kbd> + <kbd>A</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>コメント切り替え</span>
+                <kbd>Ctrl</kbd> + <kbd>/</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>指定行へ移動</span>
+                <kbd>Ctrl</kbd> + <kbd>G</kbd>
+            </div>
+        </div>
+
+
+        <div class="shortcutSection">
+            <h3>行操作</h3>
+
+            <div class="shortcutRow">
+                <span>行を削除</span>
+                <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>行を上へ移動</span>
+                <kbd>Alt</kbd> + <kbd>↑</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>行を下へ移動</span>
+                <kbd>Alt</kbd> + <kbd>↓</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>行を上へ複製</span>
+                <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>↑</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span>行を下へ複製</span>
+                <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>↓</kbd>
+            </div>
+        </div>
 
     </div>
 
