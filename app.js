@@ -2556,34 +2556,30 @@ openBtn.onclick = () => {
 fileInput.click();
 };
 
-newBtn.onclick = () => {
+if (newBtn) {
+    newBtn.onclick = () => {
 
-saveCurrentFile();
+        saveCurrentFile();
 
-const name =
-    prompt(
-        "ファイル名"
-    ) || "new.star";
+        const name =
+            prompt("ファイル名") || "new.star";
 
-const file = {
+        const file = {
+            id: crypto.randomUUID(),
+            name,
+            content: ""
+        };
 
-    id:
-        crypto.randomUUID(),
+        files.push(file);
+        activeFile = file;
 
-    name,
+        if (!editor) return;
 
-    content: ""
-};
-
-files.push(file);
-
-activeFile = file;
-if (!editor) return;
-
-renderTabs();
-renderTree();
-
-};
+        saveFiles();
+        renderTabs();
+        renderTree();
+    };
+}
 
 clearBtn.onclick =
 clearConsole;
@@ -2637,22 +2633,23 @@ fileInput.addEventListener("change", e => {
     reader.readAsText(file);
 });
 
-themeBtn.onclick = () => {
+if (themeBtn) {
+    themeBtn.onclick = () => {
 
-document.body
-    .classList
-    .toggle("light");
-
-monaco.editor
-    .setTheme(
         document.body
             .classList
-            .contains("light")
-            ? "vs"
-            : "vs-dark"
-    );
+            .toggle("light");
 
-};
+        if (typeof monaco !== "undefined") {
+            monaco.editor.setTheme(
+                document.body.classList.contains("light")
+                    ? "vs"
+                    : "vs-dark"
+            );
+        }
+
+    };
+}
 
 /* =====================================================
 CTRL+S
@@ -2997,4 +2994,840 @@ function toggleOutline(title) {
 
     title.textContent =
         `▼ ${title.dataset.name} (${count})`;
+}
+/* =====================================================
+   SEARCH / REPLACE
+===================================================== */
+
+const searchPanel =
+    document.getElementById("searchPanel");
+
+const searchInput =
+    document.getElementById("searchInput");
+
+const replaceInput =
+    document.getElementById("replaceInput");
+
+const findPrevBtn =
+    document.getElementById("findPrevBtn");
+
+const findNextBtn =
+    document.getElementById("findNextBtn");
+
+const replaceBtn =
+    document.getElementById("replaceBtn");
+
+const replaceAllBtn =
+    document.getElementById("replaceAllBtn");
+
+const closeSearchBtn =
+    document.getElementById("closeSearchBtn");
+
+const searchCount =
+    document.getElementById("searchCount");
+
+const caseSensitive =
+    document.getElementById("caseSensitive");
+
+const wholeWord =
+    document.getElementById("wholeWord");
+
+const regexSearch =
+    document.getElementById("regexSearch");
+
+
+let searchMatches = [];
+let currentSearchIndex = -1;
+let searchDecorations = [];
+
+const replaceBtnTop =
+    document.getElementById("replaceBtnTop");
+
+const replaceAllBtnTop =
+    document.getElementById("replaceAllBtnTop");
+
+const searchBtn =
+    document.getElementById("searchBtn");
+/* =====================================================
+   TOOLBAR BUTTONS
+===================================================== */
+
+searchBtn?.addEventListener(
+    "click",
+    () => {
+
+        openSearch();
+
+        searchInput.focus();
+
+    }
+);
+
+
+replaceBtnTop?.addEventListener(
+    "click",
+    () => {
+
+        openSearch();
+
+        replaceInput.focus();
+
+    }
+);
+
+
+replaceAllBtnTop?.addEventListener(
+    "click",
+    () => {
+
+        openSearch();
+
+        replaceInput.focus();
+
+        /*
+         * 一括置換ボタンを強調
+         */
+
+        replaceAllBtn?.focus();
+
+    }
+);
+
+
+/* =====================================================
+   ESCAPE REGEX
+===================================================== */
+
+function escapeRegex(text) {
+
+    return text.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+
+}
+
+
+/* =====================================================
+   GET SEARCH REGEX
+===================================================== */
+
+function getSearchRegex() {
+
+    const text =
+        searchInput.value;
+
+    if (!text) return null;
+
+    let pattern = text;
+
+    if (!regexSearch.checked) {
+
+        pattern =
+            escapeRegex(pattern);
+
+    }
+
+    if (wholeWord.checked) {
+
+        pattern =
+            `\\b${pattern}\\b`;
+
+    }
+
+    try {
+
+        return new RegExp(
+            pattern,
+            caseSensitive.checked
+                ? "g"
+                : "gi"
+        );
+
+    } catch (e) {
+
+        searchCount.textContent =
+            "正規表現エラー";
+
+        return null;
+
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE SEARCH
+===================================================== */
+
+function updateSearch() {
+
+    if (!editor) return;
+
+    const text =
+        editor.getValue();
+
+    const regex =
+        getSearchRegex();
+
+    searchMatches = [];
+
+    currentSearchIndex = -1;
+
+    if (!regex) {
+
+        searchCount.textContent =
+            "0 件";
+
+        return;
+
+    }
+
+    let match;
+
+    while (
+        (match = regex.exec(text)) !== null
+    ) {
+
+        searchMatches.push({
+
+            index: match.index,
+
+            length: match[0].length
+
+        });
+
+        /*
+         * 空文字マッチによる無限ループ防止
+         */
+
+        if (match[0].length === 0) {
+
+            regex.lastIndex++;
+
+        }
+
+    }
+
+    searchCount.textContent =
+        `${searchMatches.length} 件`;
+
+    if (searchMatches.length > 0) {
+
+        const position =
+            editor.getPosition();
+
+        const offset =
+            editor.getModel()
+                .getOffsetAt(position);
+
+        let nearest = 0;
+
+        for (
+            let i = 0;
+            i < searchMatches.length;
+            i++
+        ) {
+
+            if (
+                searchMatches[i].index >= offset
+            ) {
+
+                nearest = i;
+                break;
+
+            }
+
+        }
+
+        currentSearchIndex =
+            nearest;
+
+        selectSearchMatch(
+            currentSearchIndex
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SELECT MATCH
+===================================================== */
+
+function selectSearchMatch(index) {
+
+    if (!editor) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    /*
+     * 既存の検索ハイライトを削除
+     */
+    searchDecorations =
+        editor.deltaDecorations(
+            searchDecorations,
+            []
+        );
+
+    /*
+     * 検索結果がない場合
+     */
+    if (
+        index < 0 ||
+        index >= searchMatches.length
+    ) {
+        return;
+    }
+
+    /*
+     * 全検索結果のハイライトを作成
+     */
+    const decorations =
+        searchMatches.map((match, i) => {
+
+            const start =
+                model.getPositionAt(
+                    match.index
+                );
+
+            const end =
+                model.getPositionAt(
+                    match.index +
+                    match.length
+                );
+
+            return {
+
+                range: {
+                    startLineNumber:
+                        start.lineNumber,
+
+                    startColumn:
+                        start.column,
+
+                    endLineNumber:
+                        end.lineNumber,
+
+                    endColumn:
+                        end.column
+                },
+
+                options: {
+
+                    inlineClassName:
+                        i === index
+                            ? "star-search-current"
+                            : "star-search-match",
+
+                    overviewRuler:
+                        {
+                            color:
+                                i === index
+                                    ? "#00e5ff"
+                                    : "#64748b",
+
+                            position:
+                                monaco.editor
+                                    .OverviewRulerLane
+                                    .Full
+                        },
+
+                    minimap: {
+                        color:
+                            i === index
+                                ? "#00e5ff"
+                                : "#64748b",
+
+                        position:
+                            monaco.editor
+                                .MinimapPosition
+                                .Inline
+                    }
+
+                }
+
+            };
+
+        });
+
+    /*
+     * Monacoにハイライトを適用
+     */
+    searchDecorations =
+        editor.deltaDecorations(
+            [],
+            decorations
+        );
+
+    /*
+     * 現在選択中の検索結果
+     */
+    const match =
+        searchMatches[index];
+
+    const start =
+        model.getPositionAt(
+            match.index
+        );
+
+    const end =
+        model.getPositionAt(
+            match.index +
+            match.length
+        );
+
+    editor.setSelection({
+
+        startLineNumber:
+            start.lineNumber,
+
+        startColumn:
+            start.column,
+
+        endLineNumber:
+            end.lineNumber,
+
+        endColumn:
+            end.column
+
+    });
+
+    editor.revealRangeInCenter({
+
+        startLineNumber:
+            start.lineNumber,
+
+        startColumn:
+            start.column,
+
+        endLineNumber:
+            end.lineNumber,
+
+        endColumn:
+            end.column
+
+    });
+
+}
+
+
+/* =====================================================
+   NEXT
+===================================================== */
+
+function findNext() {
+
+    if (
+        searchMatches.length === 0
+    ) {
+
+        updateSearch();
+
+        return;
+
+    }
+
+    currentSearchIndex++;
+
+    if (
+        currentSearchIndex >=
+        searchMatches.length
+    ) {
+
+        currentSearchIndex = 0;
+
+    }
+
+    selectSearchMatch(
+        currentSearchIndex
+    );
+
+}
+
+
+/* =====================================================
+   PREVIOUS
+===================================================== */
+
+function findPrevious() {
+
+    if (
+        searchMatches.length === 0
+    ) {
+
+        updateSearch();
+
+        return;
+
+    }
+
+    currentSearchIndex--;
+
+    if (
+        currentSearchIndex < 0
+    ) {
+
+        currentSearchIndex =
+            searchMatches.length - 1;
+
+    }
+
+    selectSearchMatch(
+        currentSearchIndex
+    );
+
+}
+
+
+/* =====================================================
+   REPLACE CURRENT
+===================================================== */
+
+function replaceCurrent() {
+
+    if (!editor) return;
+
+    const selection =
+        editor.getSelection();
+
+    if (!selection) return;
+
+    const selectedText =
+        editor
+            .getModel()
+            .getValueInRange(selection);
+
+    const searchText =
+        searchInput.value;
+
+    if (!searchText) return;
+
+    let matched = false;
+
+    if (regexSearch.checked) {
+
+        const regex =
+            getSearchRegex();
+
+        if (regex) {
+
+            matched =
+                regex.test(selectedText);
+
+        }
+
+    } else {
+
+        matched =
+            caseSensitive.checked
+                ? selectedText === searchText
+                : selectedText.toLowerCase() ===
+                  searchText.toLowerCase();
+
+    }
+
+    if (!matched) {
+
+        findNext();
+
+        return;
+
+    }
+
+    editor.executeEdits(
+        "replace",
+        [{
+            range: selection,
+
+            text:
+                replaceInput.value
+        }]
+    );
+
+    updateSearch();
+
+}
+
+
+/* =====================================================
+   REPLACE ALL
+===================================================== */
+
+function replaceAll() {
+
+    if (!editor) return;
+
+    const searchText =
+        searchInput.value;
+
+    if (!searchText) return;
+
+    const replaceText =
+        replaceInput.value;
+
+    const model =
+        editor.getModel();
+
+    const text =
+        model.getValue();
+
+    const regex =
+        getSearchRegex();
+
+    if (!regex) return;
+
+    const newText =
+        text.replace(
+            regex,
+            replaceText
+        );
+
+    if (newText === text) {
+
+        searchCount.textContent =
+            "0 件";
+
+        return;
+
+    }
+
+    editor.pushUndoStop();
+
+    editor.executeEdits(
+        "replace-all",
+        [{
+            range:
+                model.getFullModelRange(),
+
+            text:
+                newText
+        }]
+    );
+
+    editor.pushUndoStop();
+
+    updateSearch();
+
+    log(
+        `一括置換完了: ${searchMatches.length} 件`
+    );
+
+}
+
+
+/* =====================================================
+   OPEN SEARCH
+===================================================== */
+
+function openSearch() {
+
+    if (!searchPanel) return;
+
+    searchPanel.classList.add("open");
+
+    searchInput.focus();
+
+    searchInput.select();
+
+    updateSearch();
+
+}
+
+
+/* =====================================================
+   CLOSE SEARCH
+===================================================== */
+
+function closeSearch() {
+
+    if (!searchPanel) return;
+
+    searchPanel.classList.remove("open");
+
+    if (editor) {
+
+        editor.focus();
+
+    }
+
+}
+
+
+/* =====================================================
+   EVENTS
+===================================================== */
+
+searchInput?.addEventListener(
+    "input",
+    updateSearch
+);
+
+replaceInput?.addEventListener(
+    "input",
+    updateSearch
+);
+
+caseSensitive?.addEventListener(
+    "change",
+    updateSearch
+);
+
+wholeWord?.addEventListener(
+    "change",
+    updateSearch
+);
+
+regexSearch?.addEventListener(
+    "change",
+    updateSearch
+);
+
+findNextBtn?.addEventListener(
+    "click",
+    findNext
+);
+
+findPrevBtn?.addEventListener(
+    "click",
+    findPrevious
+);
+
+replaceBtn?.addEventListener(
+    "click",
+    replaceCurrent
+);
+
+replaceAllBtn?.addEventListener(
+    "click",
+    replaceAll
+);
+
+closeSearchBtn?.addEventListener(
+    "click",
+    closeSearch
+);
+
+
+/* =====================================================
+   KEYBOARD
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        /*
+         * Ctrl + F
+         * 検索
+         */
+
+        if (
+            e.ctrlKey &&
+            !e.shiftKey &&
+            e.key.toLowerCase() === "f"
+        ) {
+
+            e.preventDefault();
+
+            openSearch();
+
+            return;
+
+        }
+
+
+        /*
+         * Ctrl + H
+         * 置換
+         */
+
+        if (
+            e.ctrlKey &&
+            e.key.toLowerCase() === "h"
+        ) {
+
+            e.preventDefault();
+
+            openSearch();
+
+            replaceInput.focus();
+
+            return;
+
+        }
+
+
+        /*
+         * 検索中
+         */
+
+        if (
+            searchPanel?.classList.contains("open")
+        ) {
+
+            /*
+             * Enter = 次
+             */
+
+            if (
+                e.key === "Enter" &&
+                !e.shiftKey
+            ) {
+
+                e.preventDefault();
+
+                findNext();
+
+            }
+
+            /*
+             * Shift + Enter = 前
+             */
+
+            if (
+                e.key === "Enter" &&
+                e.shiftKey
+            ) {
+
+                e.preventDefault();
+
+                findPrevious();
+
+            }
+
+            /*
+             * Escape = 閉じる
+             */
+
+            if (e.key === "Escape") {
+
+                e.preventDefault();
+
+                closeSearch();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   UPDATE AFTER EDIT
+===================================================== */
+
+function updateSearchAfterEdit() {
+
+    if (
+        searchPanel?.classList.contains("open")
+    ) {
+
+        updateSearch();
+
+    }
+
 }
