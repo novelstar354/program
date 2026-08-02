@@ -3831,3 +3831,88 @@ function updateSearchAfterEdit() {
     }
 
 }
+
+/* =====================================================
+   KEYBOARD SHORTCUT PANEL
+===================================================== */
+
+const shortcutBtn =
+    document.getElementById("shortcutBtn");
+
+const shortcutPanel =
+    document.getElementById("shortcutPanel");
+
+const closeShortcut =
+    document.getElementById("closeShortcut");
+
+
+function openShortcutPanel() {
+
+    if (!shortcutPanel) return;
+
+    shortcutPanel.classList.add("open");
+
+}
+
+
+function closeShortcutPanel() {
+
+    if (!shortcutPanel) return;
+
+    shortcutPanel.classList.remove("open");
+
+}
+
+
+shortcutBtn?.addEventListener(
+    "click",
+    openShortcutPanel
+);
+
+
+closeShortcut?.addEventListener(
+    "click",
+    closeShortcutPanel
+);
+
+
+/* パネル外クリック */
+
+document.addEventListener(
+    "mousedown",
+    e => {
+
+        if (
+            !shortcutPanel ||
+            !shortcutPanel.classList.contains("open")
+        ) {
+            return;
+        }
+
+        if (
+            !shortcutPanel.contains(e.target) &&
+            e.target !== shortcutBtn
+        ) {
+
+            closeShortcutPanel();
+
+        }
+
+    }
+);
+
+
+/* Escape */
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        if (e.key === "Escape") {
+
+            closeShortcutPanel();
+
+        }
+
+    }
+);
