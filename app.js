@@ -585,77 +585,7 @@ function starCanvasFillCircle(
     starCtx.fill();
 }
 
-function starCanvasFillPolygon(points) {
 
-    requireStarCanvas();
-
-    if (!Array.isArray(points) || points.length < 3) {
-        return;
-    }
-
-    starCtx.save();
-
-    starCtx.beginPath();
-
-    starCtx.moveTo(
-        Number(points[0][0]),
-        Number(points[0][1])
-    );
-
-    for (let i = 1; i < points.length; i++) {
-
-        starCtx.lineTo(
-            Number(points[i][0]),
-            Number(points[i][1])
-        );
-
-    }
-
-    starCtx.closePath();
-
-    starCtx.fillStyle =
-        starCanvasFill;
-
-    starCtx.fill();
-
-    starCtx.restore();
-}
-
-function starCanvasFillPolygon(points) {
-
-    requireStarCanvas();
-
-    if (!Array.isArray(points) || points.length < 3) {
-        return;
-    }
-
-    starCtx.save();
-
-    starCtx.beginPath();
-
-    starCtx.moveTo(
-        Number(points[0][0]),
-        Number(points[0][1])
-    );
-
-    for (let i = 1; i < points.length; i++) {
-
-        starCtx.lineTo(
-            Number(points[i][0]),
-            Number(points[i][1])
-        );
-
-    }
-
-    starCtx.closePath();
-
-    starCtx.fillStyle =
-        starCanvasFill;
-
-    starCtx.fill();
-
-    starCtx.restore();
-}
 /* 線 */
 
 function starCanvasLine(
@@ -1673,57 +1603,7 @@ if (line.startsWith("canvas ")) {
         continue;
     }
 
-/* =========================
-   canvas fillPolygon
-========================= */
 
-if (
-    canvasCommand.startsWith(
-        "fillPolygon "
-    )
-) {
-
-    const args =
-        canvasCommand
-            .substring(12)
-            .trim()
-            .split(/\s+/);
-
-    if (
-        args.length < 6 ||
-        args.length % 2 !== 0
-    ) {
-
-        runtimeError(
-            "Canvas fillPolygon requires x1 y1 x2 y2 x3 y3 ...",
-            lineNumber,
-            line
-        );
-
-        continue;
-    }
-
-    const points = [];
-
-    for (
-        let p = 0;
-        p < args.length;
-        p += 2
-    ) {
-
-        points.push([
-            evalExpr(args[p], vars),
-            evalExpr(args[p + 1], vars)
-        ]);
-
-    }
-
-    starCanvasFillPolygon(
-        points
-    );
-
-    continue;
-}
     /* =========================
        canvas strokeRect
     ========================= */
@@ -1874,7 +1754,7 @@ if (
     }
 
 
-   /* =========================
+    /* =========================
    canvas text
 ========================= */
 
