@@ -12,6 +12,681 @@ let mouseX = 0;
 let mouseY = 0;
 let saveTimer = null;
 const classes = {};
+
+/* =====================================================
+   STar Canvas
+===================================================== */
+
+let starCanvas = null;
+let starCtx = null;
+
+let starCanvasColor = "#ffffff";
+let starCanvasFill = "#ffffff";
+let starCanvasStroke = "#ffffff";
+let starCanvasFont = "20px sans-serif";
+
+/* =====================================================
+   STar CANVAS SYSTEM
+===================================================== */
+
+/* =====================================================
+   STar CANVAS SYSTEM
+===================================================== */
+
+function createStarCanvas(width = 800, height = 500) {
+
+    width = Math.max(1, Number(width) || 800);
+    height = Math.max(1, Number(height) || 500);
+
+    let stage =
+        document.getElementById("starCanvasStage");
+
+    if (!stage) {
+
+        /* =========================
+           Canvasステージ
+        ========================= */
+
+        stage =
+            document.createElement("div");
+
+        stage.id =
+            "starCanvasStage";
+
+        stage.style.position =
+            "fixed";
+
+        stage.style.left =
+            "50%";
+
+        stage.style.top =
+            "50%";
+
+        stage.style.transform =
+            "translate(-50%, -50%)";
+
+        stage.style.padding =
+            "12px";
+
+        stage.style.background =
+            "rgba(10,15,30,.97)";
+
+        stage.style.border =
+            "1px solid rgba(0,229,255,.35)";
+
+        stage.style.borderRadius =
+            "12px";
+
+        stage.style.boxShadow =
+            "0 0 30px rgba(0,229,255,.20)";
+
+        stage.style.zIndex =
+            "9999";
+
+        stage.style.maxWidth =
+            "calc(100vw - 40px)";
+
+        stage.style.maxHeight =
+            "calc(100vh - 40px)";
+
+        stage.style.boxSizing =
+            "border-box";
+
+
+        /* =========================
+           ×ボタン
+        ========================= */
+
+        /* =========================
+   ×ボタン
+========================= */
+
+const closeButton =
+    document.createElement("button");
+
+closeButton.id =
+    "starCanvasClose";
+
+closeButton.textContent =
+    "×";
+
+closeButton.title =
+    "Canvasを閉じる";
+
+closeButton.style.position =
+    "absolute";
+
+closeButton.style.top =
+    "8px";
+
+closeButton.style.right =
+    "8px";
+
+closeButton.style.width =
+    "30px";
+
+closeButton.style.height =
+    "30px";
+
+closeButton.style.padding =
+    "0";
+
+closeButton.style.border =
+    "1px solid rgba(0,229,255,.35)";
+
+closeButton.style.borderRadius =
+    "6px";
+
+closeButton.style.background =
+    "rgba(15,23,42,.90)";
+
+closeButton.style.color =
+    "rgba(255,255,255,.85)";
+
+closeButton.style.fontSize =
+    "22px";
+
+closeButton.style.fontWeight =
+    "400";
+
+closeButton.style.lineHeight =
+    "27px";
+
+closeButton.style.textAlign =
+    "center";
+
+closeButton.style.cursor =
+    "pointer";
+
+closeButton.style.boxSizing =
+    "border-box";
+
+closeButton.style.zIndex =
+    "10000";
+
+closeButton.style.transition =
+    "all .15s ease";
+
+closeButton.style.backdropFilter =
+    "blur(6px)";
+
+
+/* =========================
+   マウスを乗せたとき
+========================= */
+
+closeButton.addEventListener(
+    "mouseenter",
+    () => {
+
+        closeButton.style.background =
+            "rgba(0,229,255,.15)";
+
+        closeButton.style.borderColor =
+            "rgba(0,229,255,.75)";
+
+        closeButton.style.color =
+            "#ffffff";
+
+        closeButton.style.boxShadow =
+            "0 0 12px rgba(0,229,255,.20)";
+
+    }
+);
+
+
+/* =========================
+   マウスを離したとき
+========================= */
+
+closeButton.addEventListener(
+    "mouseleave",
+    () => {
+
+        closeButton.style.background =
+            "rgba(15,23,42,.90)";
+
+        closeButton.style.borderColor =
+            "rgba(0,229,255,.35)";
+
+        closeButton.style.color =
+            "rgba(255,255,255,.85)";
+
+        closeButton.style.boxShadow =
+            "none";
+
+    }
+);
+
+
+/* =========================
+   クリック
+========================= */
+
+closeButton.addEventListener(
+    "click",
+    (event) => {
+
+        event.stopPropagation();
+
+        destroyStarCanvas();
+
+    }
+);
+
+
+        stage.appendChild(
+            closeButton
+        );
+
+        document.body.appendChild(
+            stage
+        );
+    }
+
+
+    /* =========================
+       既存Canvasを削除
+    ========================= */
+
+    if (starCanvas) {
+
+        starCanvas.remove();
+
+    }
+
+
+    /* =========================
+       Canvas作成
+    ========================= */
+
+    starCanvas =
+        document.createElement("canvas");
+
+    starCanvas.id =
+        "starCanvas";
+
+    starCanvas.width =
+        width;
+
+    starCanvas.height =
+        height;
+
+
+    /* =========================
+       Canvas表示サイズ
+    ========================= */
+
+    starCanvas.style.display =
+        "block";
+
+    starCanvas.style.maxWidth =
+        "calc(100vw - 70px)";
+
+    starCanvas.style.maxHeight =
+        "calc(100vh - 90px)";
+
+    starCanvas.style.width =
+        "auto";
+
+    starCanvas.style.height =
+        "auto";
+
+    starCanvas.style.background =
+        "#111827";
+
+    starCanvas.style.borderRadius =
+        "8px";
+
+    starCanvas.style.boxSizing =
+        "border-box";
+
+
+    /* =========================
+       Canvasをステージへ追加
+    ========================= */
+
+    stage.appendChild(
+        starCanvas
+    );
+
+
+    /* =========================
+       Context
+    ========================= */
+
+    starCtx =
+        starCanvas.getContext("2d");
+
+
+    starCanvasColor =
+        "#ffffff";
+
+    starCanvasFill =
+        "#ffffff";
+
+    starCanvasStroke =
+        "#ffffff";
+
+    starCanvasFont =
+        "20px sans-serif";
+
+
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.font =
+        starCanvasFont;
+
+
+    /* =========================
+       表示
+    ========================= */
+
+    stage.style.display =
+        "block";
+
+
+    return starCanvas;
+}
+
+
+/* Canvas取得 */
+
+function requireStarCanvas() {
+
+    if (!starCanvas || !starCtx) {
+
+        createStarCanvas();
+
+    }
+
+    return true;
+}
+
+
+/* Canvas削除 */
+
+function destroyStarCanvas() {
+
+    const stage =
+        document.getElementById(
+            "starCanvasStage"
+        );
+
+    if (stage) {
+        stage.remove();
+    }
+
+    starCanvas = null;
+    starCtx = null;
+}
+
+
+/* Canvasクリア */
+
+function clearStarCanvas() {
+
+    if (!requireStarCanvas())
+        return;
+
+    starCtx.clearRect(
+        0,
+        0,
+        starCanvas.width,
+        starCanvas.height
+    );
+}
+
+
+/* 背景 */
+
+function setStarCanvasBackground(color) {
+
+    if (!requireStarCanvas())
+        return;
+
+    const oldFill =
+        starCtx.fillStyle;
+
+    starCtx.fillStyle = color;
+
+    starCtx.fillRect(
+        0,
+        0,
+        starCanvas.width,
+        starCanvas.height
+    );
+
+    starCtx.fillStyle =
+        oldFill;
+}
+
+
+/* 描画色 */
+
+function setStarCanvasColor(color) {
+
+    requireStarCanvas();
+
+    starCanvasColor = color;
+
+    starCtx.fillStyle = color;
+    starCtx.strokeStyle = color;
+}
+
+
+/* 塗りつぶし色 */
+
+function setStarCanvasFill(color) {
+
+    requireStarCanvas();
+
+    starCanvasFill = color;
+
+    starCtx.fillStyle = color;
+}
+
+
+/* 線色 */
+
+function setStarCanvasStroke(color) {
+
+    requireStarCanvas();
+
+    starCanvasStroke = color;
+
+    starCtx.strokeStyle = color;
+}
+
+
+/* 四角形 */
+
+function starCanvasRect(
+    x,
+    y,
+    width,
+    height
+) {
+
+    requireStarCanvas();
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.strokeRect(
+        Number(x),
+        Number(y),
+        Number(width),
+        Number(height)
+    );
+}
+
+
+/* 塗りつぶし四角形 */
+
+function starCanvasFillRect(
+    x,
+    y,
+    width,
+    height
+) {
+
+    requireStarCanvas();
+
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.fillRect(
+        Number(x),
+        Number(y),
+        Number(width),
+        Number(height)
+    );
+}
+
+
+/* 枠付き四角形 */
+
+function starCanvasStrokeRect(
+    x,
+    y,
+    width,
+    height
+) {
+
+    requireStarCanvas();
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.strokeRect(
+        Number(x),
+        Number(y),
+        Number(width),
+        Number(height)
+    );
+}
+
+
+/* 円 */
+
+function starCanvasCircle(
+    x,
+    y,
+    radius
+) {
+
+    requireStarCanvas();
+
+    starCtx.beginPath();
+
+    starCtx.arc(
+        Number(x),
+        Number(y),
+        Number(radius),
+        0,
+        Math.PI * 2
+    );
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.stroke();
+}
+
+
+/* 塗りつぶし円 */
+
+function starCanvasFillCircle(
+    x,
+    y,
+    radius
+) {
+
+    requireStarCanvas();
+
+    starCtx.beginPath();
+
+    starCtx.arc(
+        Number(x),
+        Number(y),
+        Number(radius),
+        0,
+        Math.PI * 2
+    );
+
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.fill();
+}
+
+
+/* 線 */
+
+function starCanvasLine(
+    x1,
+    y1,
+    x2,
+    y2
+) {
+
+    requireStarCanvas();
+
+    starCtx.beginPath();
+
+    starCtx.moveTo(
+        Number(x1),
+        Number(y1)
+    );
+
+    starCtx.lineTo(
+        Number(x2),
+        Number(y2)
+    );
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.stroke();
+}
+
+
+/* テキスト */
+
+function starCanvasText(
+    text,
+    x,
+    y,
+    size = 20
+) {
+
+    requireStarCanvas();
+
+    starCtx.font =
+        `${Number(size)}px sans-serif`;
+
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.fillText(
+        String(text),
+        Number(x),
+        Number(y)
+    );
+}
+
+
+/* Canvas表示 */
+
+function showStarCanvas() {
+
+    const stage =
+        document.getElementById(
+            "starCanvasStage"
+        );
+
+    if (stage) {
+        stage.style.display = "block";
+    }
+}
+
+
+/* Canvas非表示 */
+
+function hideStarCanvas() {
+
+    const stage =
+        document.getElementById(
+            "starCanvasStage"
+        );
+
+    if (stage) {
+        stage.style.display = "none";
+    }
+}
+
+
+/* Canvasサイズ変更 */
+
+function resizeStarCanvas(
+    width,
+    height
+) {
+
+    if (!requireStarCanvas())
+        return;
+
+    starCanvas.width =
+        Math.max(1, Number(width));
+
+    starCanvas.height =
+        Math.max(1, Number(height));
+}
 /* =====================================================
 DOM
 ===================================================== */
@@ -598,6 +1273,549 @@ const deferBlocks = [];
 
     if (!line) continue;
     if (line.startsWith("#")) continue;
+
+    /* =====================================================
+   CANVAS
+===================================================== */
+
+if (line.startsWith("canvas ")) {
+
+    const canvasCommand =
+        line.substring(7).trim();
+
+
+    /* =========================
+       canvas create
+    ========================= */
+
+    if (canvasCommand.startsWith("create ")) {
+
+        const args =
+            canvasCommand
+                .substring(7)
+                .trim()
+                .split(/\s+/);
+
+        const width =
+            evalExpr(
+                args[0] || "800",
+                vars
+            );
+
+        const height =
+            evalExpr(
+                args[1] || "500",
+                vars
+            );
+
+        createStarCanvas(
+            width,
+            height
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas clear
+    ========================= */
+
+    if (canvasCommand === "clear") {
+
+        clearStarCanvas();
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas show
+    ========================= */
+
+    if (canvasCommand === "show") {
+
+        showStarCanvas();
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas hide
+    ========================= */
+
+    if (canvasCommand === "hide") {
+
+        hideStarCanvas();
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas destroy
+    ========================= */
+
+    if (canvasCommand === "destroy") {
+
+        destroyStarCanvas();
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas background
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "background "
+        )
+    ) {
+
+        const value =
+            canvasCommand
+                .substring(11)
+                .trim();
+
+        const color =
+            evalExpr(
+                value,
+                vars
+            );
+
+        setStarCanvasBackground(
+            color
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas color
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "color "
+        )
+    ) {
+
+        const value =
+            canvasCommand
+                .substring(6)
+                .trim();
+
+        const color =
+            evalExpr(
+                value,
+                vars
+            );
+
+        setStarCanvasColor(
+            color
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas fill
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "fill "
+        )
+    ) {
+
+        const value =
+            canvasCommand
+                .substring(5)
+                .trim();
+
+        const color =
+            evalExpr(
+                value,
+                vars
+            );
+
+        setStarCanvasFill(
+            color
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas stroke
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "stroke "
+        )
+    ) {
+
+        const value =
+            canvasCommand
+                .substring(7)
+                .trim();
+
+        const color =
+            evalExpr(
+                value,
+                vars
+            );
+
+        setStarCanvasStroke(
+            color
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas size
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "size "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(5)
+                .trim()
+                .split(/\s+/);
+
+        const width =
+            evalExpr(
+                args[0] || "800",
+                vars
+            );
+
+        const height =
+            evalExpr(
+                args[1] || "500",
+                vars
+            );
+
+        resizeStarCanvas(
+            width,
+            height
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas rect
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "rect "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(5)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 4) {
+
+            runtimeError(
+                "Canvas rect requires x y width height",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasRect(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars),
+            evalExpr(args[3], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas fillRect
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "fillRect "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(9)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 4) {
+
+            runtimeError(
+                "Canvas fillRect requires x y width height",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasFillRect(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars),
+            evalExpr(args[3], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas strokeRect
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "strokeRect "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(11)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 4) {
+
+            runtimeError(
+                "Canvas strokeRect requires x y width height",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasStrokeRect(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars),
+            evalExpr(args[3], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas circle
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "circle "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(7)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 3) {
+
+            runtimeError(
+                "Canvas circle requires x y radius",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasCircle(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas fillCircle
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "fillCircle "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(11)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 3) {
+
+            runtimeError(
+                "Canvas fillCircle requires x y radius",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasFillCircle(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas line
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "line "
+        )
+    ) {
+
+        const args =
+            canvasCommand
+                .substring(5)
+                .trim()
+                .split(/\s+/);
+
+        if (args.length < 4) {
+
+            runtimeError(
+                "Canvas line requires x1 y1 x2 y2",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        starCanvasLine(
+            evalExpr(args[0], vars),
+            evalExpr(args[1], vars),
+            evalExpr(args[2], vars),
+            evalExpr(args[3], vars)
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       canvas text
+    ========================= */
+
+    if (
+        canvasCommand.startsWith(
+            "text "
+        )
+    ) {
+
+        const match =
+            canvasCommand.match(
+                /^text\s+"(.*?)"\s+(\S+)\s+(\S+)(?:\s+(\S+))?$/
+            );
+
+        if (!match) {
+
+            runtimeError(
+                'Canvas text syntax: canvas text "text" x y [size]',
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        const text =
+            match[1];
+
+        const x =
+            evalExpr(
+                match[2],
+                vars
+            );
+
+        const y =
+            evalExpr(
+                match[3],
+                vars
+            );
+
+        const size =
+            match[4]
+                ? evalExpr(
+                    match[4],
+                    vars
+                )
+                : 20;
+
+        starCanvasText(
+            text,
+            x,
+            y,
+            size
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       unknown canvas command
+    ========================= */
+
+    runtimeError(
+        `Unknown Canvas command: ${canvasCommand}`,
+        lineNumber,
+        line
+    );
+
+    continue;
+}
 /* =========================
    break
 ========================= */
