@@ -634,6 +634,21 @@ canvas hide
 (一時的に非表示)
 canvas destroy
 (完全に削除)
+canvas save
+(保存)
+canvas restore
+(saveした状態に戻す)
+canvas translate x y
+(canvasの原点を移動する)
+canvas rotate 1.5708
+(回転する)
+※rotateはrestoreまでは影響する
+    
+※0       = 0度
+　0.7854  = 45度
+　1.5708  = 90度
+　3.14159 = 180度
+　6.28318 = 360度
 
 #canvas 色
 canvas background "#000000"
@@ -645,6 +660,8 @@ canvas stroke "#ffffff"
 (線の色を設定)
 
 #canvas 図形
+canvas linewidth 5
+(線の太さの設定)
 canvas rect x y w h
 (四角形)
 canvas fillRect x y w h
@@ -655,12 +672,27 @@ canvas circle x y radius
 (円)
 canvas fillCircle
 (塗りつぶし円)
+canvas stroke "#ffffff"
+canvas polygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(多角形)
+canvas fill "#00e5ff"
+canvas fillPolygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(塗りつぶし多角形)
+canvas scale 2 2
+(2倍に拡大)
+canvas 0.5 0.5
+(半分に縮小)
+
+#canvas 線    
 canvas line x1 y1 x2 y2
 (線)
+canvas arc x1 y1 x2 y2 0 3.14159
+(0 3.14159は約180度)
 
 ※w=横幅,h=高さ
 
-#canvas 線
+#canvas 文字
+canvas fill "#ffffff"
 canvas text "Hello STar!" x y size
 (sizeのデフォルトは20)
 
