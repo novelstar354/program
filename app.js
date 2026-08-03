@@ -24,7 +24,7 @@ let starCanvasColor = "#ffffff";
 let starCanvasFill = "#ffffff";
 let starCanvasStroke = "#ffffff";
 let starCanvasFont = "20px sans-serif";
-
+let starCanvasLineWidth = 1;
 /* =====================================================
    STar CANVAS SYSTEM
 ===================================================== */
@@ -615,7 +615,16 @@ function starCanvasLine(
     starCtx.stroke();
 }
 
+function setStarCanvasLineWidth(width) {
 
+    requireStarCanvas();
+
+    starCanvasLineWidth =
+        Math.max(0.1, Number(width) || 1);
+
+    starCtx.lineWidth =
+        starCanvasLineWidth;
+}
 /* テキスト */
 
 function starCanvasText(
@@ -650,7 +659,112 @@ function starCanvasText(
     starCtx.restore();
 }
 
+function starCanvasFillPolygon(points) {
 
+    requireStarCanvas();
+
+    if (!Array.isArray(points) || points.length < 3) {
+        return;
+    }
+
+    starCtx.save();
+
+    starCtx.beginPath();
+
+    starCtx.moveTo(
+        Number(points[0][0]),
+        Number(points[0][1])
+    );
+
+    for (let i = 1; i < points.length; i++) {
+
+        starCtx.lineTo(
+            Number(points[i][0]),
+            Number(points[i][1])
+        );
+
+    }
+
+    starCtx.closePath();
+
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.fill();
+
+    starCtx.restore();
+}
+
+function starCanvasPolygon(points) {
+
+    requireStarCanvas();
+
+    if (!Array.isArray(points) || points.length < 3) {
+        return;
+    }
+
+    starCtx.save();
+
+    starCtx.beginPath();
+
+    starCtx.moveTo(
+        Number(points[0][0]),
+        Number(points[0][1])
+    );
+
+    for (let i = 1; i < points.length; i++) {
+
+        starCtx.lineTo(
+            Number(points[i][0]),
+            Number(points[i][1])
+        );
+
+    }
+
+    starCtx.closePath();
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.lineWidth =
+        starCanvasLineWidth || 1;
+
+    starCtx.stroke();
+
+    starCtx.restore();
+}
+function starCanvasArc(
+    x,
+    y,
+    radius,
+    startAngle,
+    endAngle
+) {
+
+    requireStarCanvas();
+
+    starCtx.save();
+
+    starCtx.beginPath();
+
+    starCtx.arc(
+        Number(x),
+        Number(y),
+        Number(radius),
+        Number(startAngle),
+        Number(endAngle)
+    );
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.lineWidth =
+        starCanvasLineWidth || 1;
+
+    starCtx.stroke();
+
+    starCtx.restore();
+}
 /* Canvas表示 */
 
 function showStarCanvas() {
@@ -664,7 +778,64 @@ function showStarCanvas() {
         stage.style.display = "block";
     }
 }
+/* =========================
+   Canvas save
+========================= */
 
+function starCanvasSave(){
+
+    requireStarCanvas();
+
+    starCtx.save();
+
+}
+
+
+/* =========================
+   Canvas restore
+========================= */
+
+function starCanvasRestore(){
+
+    requireStarCanvas();
+
+    starCtx.restore();
+
+}
+
+
+/* =========================
+   Canvas translate
+========================= */
+
+function starCanvasTranslate(x,y){
+
+    requireStarCanvas();
+
+    starCtx.translate(
+        Number(x),
+        Number(y)
+    );
+
+}
+
+
+/* =========================
+   Canvas rotate
+========================= */
+
+function starCanvasRotate(angle){
+
+    requireStarCanvas();
+
+    // STarは度数指定
+    const rad =
+        Number(angle) *
+        Math.PI / 180;
+
+    starCtx.rotate(rad);
+
+}
 
 /* Canvas非表示 */
 
@@ -692,10 +863,23 @@ function resizeStarCanvas(
         return;
 
     starCanvas.width =
-        Math.max(1, Number(width));
+        Math.max(1, Number(width) || 800);
 
     starCanvas.height =
-        Math.max(1, Number(height));
+        Math.max(1, Number(height) || 500);
+
+    // Canvasの描画状態を再設定
+    starCtx.fillStyle =
+        starCanvasFill;
+
+    starCtx.strokeStyle =
+        starCanvasStroke;
+
+    starCtx.lineWidth =
+        starCanvasLineWidth;
+
+    starCtx.font =
+        starCanvasFont;
 }
 /* =====================================================
 DOM
@@ -1813,7 +1997,244 @@ if (
     continue;
 }
 
+/* =========================
+   canvas fillPolygon
+========================= */
 
+if (
+    canvasCommand.startsWith(
+        "fillPolygon "
+    )
+) {
+
+    const args =
+        canvasCommand
+            .substring(12)
+            .trim()
+            .split(/\s+/);
+
+    if (
+        args.length < 6 ||
+        args.length % 2 !== 0
+    ) {
+
+        runtimeError(
+            "Canvas fillPolygon requires x1 y1 x2 y2 x3 y3 ...",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const points = [];
+
+    for (
+        let p = 0;
+        p < args.length;
+        p += 2
+    ) {
+
+        points.push([
+            evalExpr(args[p], vars),
+            evalExpr(args[p + 1], vars)
+        ]);
+
+    }
+
+    starCanvasFillPolygon(
+        points
+    );
+
+    continue;
+}
+/* =========================
+   canvas polygon
+========================= */
+
+if (
+    canvasCommand.startsWith(
+        "polygon "
+    )
+) {
+
+    const args =
+        canvasCommand
+            .substring(8)
+            .trim()
+            .split(/\s+/);
+
+    if (
+        args.length < 6 ||
+        args.length % 2 !== 0
+    ) {
+
+        runtimeError(
+            "Canvas polygon requires x1 y1 x2 y2 x3 y3 ...",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const points = [];
+
+    for (
+        let p = 0;
+        p < args.length;
+        p += 2
+    ) {
+
+        points.push([
+            evalExpr(args[p], vars),
+            evalExpr(args[p + 1], vars)
+        ]);
+
+    }
+
+    starCanvasPolygon(
+        points
+    );
+
+    continue;
+}
+    /* =========================
+   canvas arc
+========================= */
+
+if (
+    canvasCommand.startsWith(
+        "arc "
+    )
+) {
+
+    const args =
+        canvasCommand
+            .substring(4)
+            .trim()
+            .split(/\s+/);
+
+    if (args.length < 5) {
+
+        runtimeError(
+            "Canvas arc requires x y radius startAngle endAngle",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    starCanvasArc(
+        evalExpr(args[0], vars),
+        evalExpr(args[1], vars),
+        evalExpr(args[2], vars),
+        evalExpr(args[3], vars),
+        evalExpr(args[4], vars)
+    );
+
+    continue;
+}
+    /* =========================
+   canvas save
+========================= */
+
+if(canvasCommand === "save"){
+
+    starCanvasSave();
+
+    continue;
+}
+
+
+/* =========================
+   canvas restore
+========================= */
+
+if(canvasCommand === "restore"){
+
+    starCanvasRestore();
+
+    continue;
+}
+
+
+/* =========================
+   canvas translate
+========================= */
+
+if(
+    canvasCommand.startsWith(
+        "translate "
+    )
+){
+
+    const args =
+        canvasCommand
+        .substring(10)
+        .trim()
+        .split(/\s+/);
+
+
+    starCanvasTranslate(
+        evalExpr(args[0],vars),
+        evalExpr(args[1],vars)
+    );
+
+    continue;
+}
+
+
+/* =========================
+   canvas rotate
+========================= */
+
+if(
+    canvasCommand.startsWith(
+        "rotate "
+    )
+){
+
+    const angle =
+        canvasCommand
+        .substring(7)
+        .trim();
+
+
+    starCanvasRotate(
+        evalExpr(angle,vars)
+    );
+
+    continue;
+}
+    /* =========================
+   canvas lineWidth
+========================= */
+
+if (
+    canvasCommand.startsWith(
+        "lineWidth "
+    )
+) {
+
+    const value =
+        canvasCommand
+            .substring(10)
+            .trim();
+
+    const width =
+        evalExpr(
+            value,
+            vars
+        );
+
+    setStarCanvasLineWidth(
+        width
+    );
+
+    continue;
+}
     /* =========================
        unknown canvas command
     ========================= */
