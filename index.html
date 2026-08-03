@@ -622,6 +622,48 @@ catch(err){
 
 (errにはエラーメッセージが入ります。)
 
+#canvas
+canvas create 800 500
+canvas size 1000 600
+(サイズ変更)
+canvas clear
+(消去)
+canvas show
+(表示)
+canvas hide
+(一時的に非表示)
+canvas destroy
+(完全に削除)
+
+#canvas 色
+canvas background "#000000"
+canvas color "#ffffff"
+(描画色を設定)
+canvas fill "#ff0000"
+(塗りつぶす色を設定)
+canvas stroke "#ffffff"
+(線の色を設定)
+
+#canvas 図形
+canvas rect x y w h
+(四角形)
+canvas fillRect x y w h
+(四角形に塗りつぶす)
+canvas strokeRect x y w h
+(四角形の枠)
+canvas circle x y radius
+(円)
+canvas fillCircle
+(塗りつぶし円)
+canvas line x1 y1 x2 y2
+(線)
+
+※w=横幅,h=高さ
+
+#canvas 線
+canvas text "Hello STar!" x y size
+(sizeのデフォルトは20)
+
 #インポート
 import "config.star"
 (関数、定数などすべてがインポートされます。)
