@@ -285,6 +285,7 @@ STar Language v3.1.9
 ・クリア
 ・終了
 ・時間
+・マウス、キーボード
 ・例外処理
 ・canvas
 ・クラス
@@ -609,6 +610,7 @@ foreach n in nums{
 
     
 }
+
 #例外処理
 try{
     print "開始"
@@ -632,6 +634,36 @@ catch(err){
 }
 
 (errにはエラーメッセージが入ります。)
+
+#キーボード
+if key("ArrowLeft"){
+    call moveLeft()
+}
+
+<kbd>←</kbd>:ArrowLeft
+<kbd>➝</kbd>:ArrowRight
+<kbd>↑</kbd>:ArrowUp
+<kbd>↓</kbd>:ArrowDown
+<kbd>スペース</kbd>:Space
+<kbd>Enter</kbd>:Enter
+文字は小文字
+数字対応
+
+#マウス
+マウス位置はmouseX,mouseYとして変数に保存される。
+
+if mouseDown("left"){
+    print "左クリック中"
+}
+
+if mouseDown("right"){
+    print "右クリック中"
+}
+
+if mouseDown("middle"){
+    print "中央ボタンクリック中"
+}
+(一度クリックされたことを取得するならmouseDownをmouseClickにする。)
 
 #canvas
 canvas create 800 500
@@ -879,7 +911,7 @@ exit `${name}は倒れた。
             <div class="shortcutRow">
                 <span>行を下へ複製</span>
                 <kbd>Shift</kbd> + <kbd>Alt</kbd> + <kbd>↓</kbd>
-            </div>
+                            </div>
         </div>
 
     </div>
