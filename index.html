@@ -234,12 +234,39 @@
 <!-- 下部パネル -->
 <div id="bottomPanel">
 
-    <div id="consoleHeader">
+   <div id="consoleHeader">
+
+    <span>
         Console
-        <button id="clearConsoleBtn">
-    Clear
-</button>
+    </span>
+
+
+    <div id="consoleControls">
+
+        <label class="consoleCheck">
+
+            <input
+                type="checkbox"
+                id="consoleAutoScrollCheck"
+                checked
+            >
+
+            自動スクロール
+
+        </label>
+
+
+        <button
+            id="clearConsoleBtn"
+            class="consoleButton"
+        >
+            Clear
+        </button>
+
+
     </div>
+
+</div>
 
     <pre id="console"></pre>
 
