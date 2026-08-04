@@ -6029,3 +6029,24 @@ document.addEventListener(
 
     }
 );
+/* =====================================================
+   プログラム実行ショートカット
+   Ctrl + Enter / Cmd + Enter
+===================================================== */
+
+document.addEventListener("keydown", (e) => {
+
+    // Ctrl + Enter または Cmd + Enter
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+
+        e.preventDefault();
+
+        // Runボタンを押す
+        const runButton = document.getElementById("runBtn");
+
+        if (runButton) {
+            runButton.click();
+        }
+    }
+
+});
