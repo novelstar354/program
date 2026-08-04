@@ -316,31 +316,36 @@ closeButton.addEventListener(
     ========================= */
 
     starCtx =
-        starCanvas.getContext("2d");
+    starCanvas.getContext("2d");
 
 
-    starCanvasColor =
-        "#ffffff";
+starCanvasColor =
+    "#ffffff";
 
-    starCanvasFill =
-        "#ffffff";
+starCanvasFill =
+    "#ffffff";
 
-    starCanvasStroke =
-        "#ffffff";
+starCanvasStroke =
+    "#ffffff";
 
-    starCanvasFont =
-        "20px sans-serif";
+starCanvasFont =
+    "20px sans-serif";
+
+starCanvasLineWidth =
+    1;
 
 
-    starCtx.fillStyle =
-        starCanvasFill;
+starCtx.fillStyle =
+    starCanvasFill;
 
-    starCtx.strokeStyle =
-        starCanvasStroke;
+starCtx.strokeStyle =
+    starCanvasStroke;
 
-    starCtx.font =
-        starCanvasFont;
+starCtx.lineWidth =
+    starCanvasLineWidth;
 
+starCtx.font =
+    starCanvasFont;
 
     /* =========================
        表示
@@ -433,6 +438,9 @@ function setStarCanvasColor(color) {
     requireStarCanvas();
 
     starCanvasColor = color;
+
+    starCanvasFill = color;
+    starCanvasStroke = color;
 
     starCtx.fillStyle = color;
     starCtx.strokeStyle = color;
