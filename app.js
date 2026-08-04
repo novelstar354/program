@@ -19,7 +19,11 @@ const classes = {};
 
 let starCanvas = null;
 let starCtx = null;
-
+let starCanvasAnimationRunning = false;
+let starCanvasAnimationId = null;
+let starCanvasAnimationFrame = 0;
+let starCanvasAnimationStartTime = 0;
+let starCanvasAnimationLastTime = 0;
 let starCanvasColor = "#ffffff";
 let starCanvasFill = "#ffffff";
 let starCanvasStroke = "#ffffff";
@@ -376,6 +380,8 @@ function requireStarCanvas() {
 /* Canvas削除 */
 
 function destroyStarCanvas() {
+
+    stopStarCanvasAnimation();
 
     const stage =
         document.getElementById(
@@ -844,7 +850,158 @@ function starCanvasRotate(angle){
     starCtx.rotate(rad);
 
 }
+/* =====================================================
+   STar Canvas Animation
+===================================================== */
 
+function stopStarCanvasAnimation() {
+
+    starCanvasAnimationRunning = false;
+
+    if (starCanvasAnimationId !== null) {
+
+        cancelAnimationFrame(
+            starCanvasAnimationId
+        );
+
+        starCanvasAnimationId = null;
+    }
+}
+
+
+function startStarCanvasAnimation(
+    block,
+    vars,
+    baseLine = 1,
+    fps = 60
+) {
+
+    requireStarCanvas();
+
+    stopStarCanvasAnimation();
+
+    starCanvasAnimationRunning = true;
+
+    starCanvasAnimationFrame = 0;
+
+    starCanvasAnimationStartTime =
+        performance.now();
+
+    starCanvasAnimationLastTime =
+        starCanvasAnimationStartTime;
+
+    fps =
+        Math.max(
+            1,
+            Math.min(
+                240,
+                Number(fps) || 60
+            )
+        );
+
+    const frameInterval =
+        1000 / fps;
+
+
+    async function animationLoop(now) {
+
+        if (!starCanvasAnimationRunning)
+            return;
+
+        if (!starCanvas || !starCtx) {
+
+            stopStarCanvasAnimation();
+            return;
+        }
+
+
+        const elapsed =
+            now -
+            starCanvasAnimationLastTime;
+
+
+        if (elapsed >= frameInterval) {
+
+            const delta =
+                now -
+                starCanvasAnimationLastTime;
+
+            starCanvasAnimationLastTime =
+                now;
+
+
+            vars.frame =
+                starCanvasAnimationFrame;
+
+            vars.time =
+                now -
+                starCanvasAnimationStartTime;
+
+            vars.delta =
+                delta;
+
+
+            try {
+
+                await runSTar(
+                    block,
+                    vars,
+                    baseLine
+                );
+
+            }
+            catch (err) {
+
+                stopStarCanvasAnimation();
+
+                if (
+                    err &&
+                    typeof err === "object" &&
+                    err.lineNumber !== undefined
+                ) {
+
+                    logError(err);
+
+                }
+                else {
+
+                    log(
+                        `[Animation Error] ${
+                            err?.message ||
+                            String(err)
+                        }`
+                    );
+
+                    console.error(err);
+
+                }
+
+                return;
+            }
+
+
+            starCanvasAnimationFrame++;
+
+        }
+
+
+        if (starCanvasAnimationRunning) {
+
+            starCanvasAnimationId =
+                requestAnimationFrame(
+                    animationLoop
+                );
+
+        }
+
+    }
+
+
+    starCanvasAnimationId =
+        requestAnimationFrame(
+            animationLoop
+        );
+}
 /* Canvas非表示 */
 
 function hideStarCanvas() {
@@ -1484,7 +1641,77 @@ if (line.startsWith("canvas ")) {
 
     const canvasCommand =
         line.substring(7).trim();
+/* =========================
+   canvas animate
+========================= */
 
+if (
+    canvasCommand.startsWith(
+        "animate"
+    )
+) {
+
+    const match =
+        canvasCommand.match(
+            /^animate(?:\s+(.+?))?\s*\{$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Canvas animate syntax: canvas animate [fps] {",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+
+    const fpsText =
+        match[1];
+
+
+    const fps =
+        fpsText
+            ? evalExpr(
+                fpsText,
+                vars
+            )
+            : 60;
+
+
+    const result =
+        getBlock(
+            i + 1
+        );
+
+
+    startStarCanvasAnimation(
+        result.block,
+        vars,
+        lineNumber,
+        fps
+    );
+
+
+    i =
+        result.end;
+
+    continue;
+}
+    /* =========================
+   canvas stop
+========================= */
+
+if (
+    canvasCommand === "stop"
+) {
+
+    stopStarCanvasAnimation();
+
+    continue;
+}
 
     /* =========================
        canvas create
@@ -3394,6 +3621,78 @@ if (ctor) {
             vars[key] = value;
             continue;
         }
+        /* =====================================================
+   inc
+   ===================================================== */
+
+if (line.startsWith("inc ")) {
+    const parts = line.split(/\s+/);
+
+    const name = parts[1];
+
+    if (!name) {
+        throw new Error(`Line ${lineNumber}: inc requires a variable`);
+    }
+
+    const amount = parts[2] !== undefined
+        ? Number(evalExpr(parts.slice(2).join(" "), vars))
+        : 1;
+
+    if (!Number.isFinite(amount)) {
+        throw new Error(`Line ${lineNumber}: inc amount must be a number`);
+    }
+
+    if (!(name in vars)) {
+        throw new Error(`Line ${lineNumber}: variable '${name}' is not defined`);
+    }
+
+    const current = Number(vars[name]);
+
+    if (!Number.isFinite(current)) {
+        throw new Error(`Line ${lineNumber}: variable '${name}' is not a number`);
+    }
+
+    vars[name] = current + amount;
+
+    continue;
+}
+
+
+/* =====================================================
+   dec
+   ===================================================== */
+
+if (line.startsWith("dec ")) {
+    const parts = line.split(/\s+/);
+
+    const name = parts[1];
+
+    if (!name) {
+        throw new Error(`Line ${lineNumber}: dec requires a variable`);
+    }
+
+    const amount = parts[2] !== undefined
+        ? Number(evalExpr(parts.slice(2).join(" "), vars))
+        : 1;
+
+    if (!Number.isFinite(amount)) {
+        throw new Error(`Line ${lineNumber}: dec amount must be a number`);
+    }
+
+    if (!(name in vars)) {
+        throw new Error(`Line ${lineNumber}: variable '${name}' is not defined`);
+    }
+
+    const current = Number(vars[name]);
+
+    if (!Number.isFinite(current)) {
+        throw new Error(`Line ${lineNumber}: variable '${name}' is not a number`);
+    }
+
+    vars[name] = current - amount;
+
+    continue;
+}
         if (line.includes(".push(")) {
 
     const pushMatch =
