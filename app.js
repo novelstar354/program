@@ -725,6 +725,32 @@ function setStarCanvasLineWidth(width) {
     starCtx.lineWidth =
         starCanvasLineWidth;
 }
+function interpolateStarCanvasText(text, vars) {
+
+    return String(text).replace(
+        /\$\{([^}]+)\}/g,
+        (_, expression) => {
+
+            try {
+
+                return String(
+                    evalExpr(
+                        expression.trim(),
+                        vars
+                    )
+                );
+
+            }
+            catch(e){
+
+                return "${" + expression + "}";
+
+            }
+
+        }
+    );
+
+}
 /* テキスト */
 
 function starCanvasText(
@@ -1211,8 +1237,54 @@ function escapeHtml(text) {
 LOG
 ===================================================== */
 
-function log(text) {
-    consoleEl.innerHTML += `<div>${escapeHtml(text)}</div>`;
+let consoleAutoScroll = true;
+
+
+function scrollConsoleToBottom(){
+
+    if(consoleAutoScroll){
+
+        consoleEl.scrollTop =
+            consoleEl.scrollHeight;
+
+    }
+
+}
+
+
+function setConsoleScrollMode(mode){
+
+    consoleAutoScroll = mode;
+
+
+    localStorage.setItem(
+        "consoleAutoScroll",
+        mode
+    );
+
+
+    const check =
+        document.getElementById(
+            "consoleAutoScrollCheck"
+        );
+
+
+    if(check){
+
+        check.checked = mode;
+
+    }
+
+}
+
+
+function log(text){
+
+    consoleEl.innerHTML +=
+        `<div>${escapeHtml(text)}</div>`;
+
+    scrollConsoleToBottom();
+
 }
 
 function logError(err) {
@@ -2321,18 +2393,16 @@ if (
      */
 
     else if (
-        match[2] !== undefined
-    ) {
+    match[2] !== undefined
+) {
 
-        text =
-            evalExpr(
-                "`" +
-                match[2] +
-                "`",
-                vars
-            );
+    text =
+        interpolateStarCanvasText(
+            match[2],
+            vars
+        );
 
-    }
+}
 
 
     /*
@@ -6135,3 +6205,20 @@ document.addEventListener("keydown", (e) => {
     }
 
 });
+const consoleAutoScrollCheck =
+    document.getElementById(
+        "consoleAutoScrollCheck"
+    );
+
+
+if(consoleAutoScrollCheck){
+
+    consoleAutoScrollCheck.onchange = ()=>{
+
+        setConsoleScrollMode(
+            consoleAutoScrollCheck.checked
+        );
+
+    };
+
+}
