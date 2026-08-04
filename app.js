@@ -8,8 +8,22 @@ let editor = null;
 const functions = {};
 const consts = {};
 const keys = {};
+
 let mouseX = 0;
 let mouseY = 0;
+
+const mouseButtons = {
+    left: false,
+    middle: false,
+    right: false
+};
+
+const mouseClicks = {
+    left: false,
+    middle: false,
+    right: false
+};
+
 let saveTimer = null;
 const classes = {};
 
@@ -276,7 +290,79 @@ closeButton.addEventListener(
     starCanvas.height =
         height;
 
+/* =====================================================
+   STar Canvas Mouse
+===================================================== */
 
+starCanvas.addEventListener("mousemove", e => {
+
+    const rect =
+        starCanvas.getBoundingClientRect();
+
+    const scaleX =
+        starCanvas.width / rect.width;
+
+    const scaleY =
+        starCanvas.height / rect.height;
+
+    mouseX =
+        (e.clientX - rect.left) * scaleX;
+
+    mouseY =
+        (e.clientY - rect.top) * scaleY;
+
+});
+
+
+starCanvas.addEventListener("mousedown", e => {
+
+    if (e.button === 0) {
+        mouseButtons.left = true;
+        mouseClicks.left = true;
+    }
+
+    if (e.button === 1) {
+        mouseButtons.middle = true;
+        mouseClicks.middle = true;
+    }
+
+    if (e.button === 2) {
+        mouseButtons.right = true;
+        mouseClicks.right = true;
+    }
+
+});
+
+
+starCanvas.addEventListener("mouseup", e => {
+
+    if (e.button === 0) {
+        mouseButtons.left = false;
+    }
+
+    if (e.button === 1) {
+        mouseButtons.middle = false;
+    }
+
+    if (e.button === 2) {
+        mouseButtons.right = false;
+    }
+
+});
+
+
+starCanvas.addEventListener("mouseleave", () => {
+
+    mouseButtons.left = false;
+    mouseButtons.middle = false;
+    mouseButtons.right = false;
+
+});
+
+
+starCanvas.addEventListener("contextmenu", e => {
+    e.preventDefault();
+});
     /* =========================
        Canvas表示サイズ
     ========================= */
@@ -4326,15 +4412,20 @@ expr = expr.replace(
         }
     );
 
-    /* =========================
-       key("x")
-    ========================= */
+   /* =========================
+   key("...")
+========================= */
 
-    expr = expr.replace(
-        /key\("(.+?)"\)/g,
-        (_, keyName) =>
-            keys[keyName] === true
-    );
+expr = expr.replace(
+    /key\(\s*["'](.+?)["']\s*\)/g,
+    (_, keyName) => {
+
+        return keys[keyName] === true
+            ? "true"
+            : "false";
+
+    }
+);
 
     /* =========================
        mouse
@@ -4349,7 +4440,54 @@ expr = expr.replace(
         /\bmouseY\b/g,
         mouseY
     );
+/* =========================
+   mouse
+========================= */
 
+expr = expr.replace(
+    /\bmouseX\b/g,
+    String(mouseX)
+);
+
+expr = expr.replace(
+    /\bmouseY\b/g,
+    String(mouseY)
+);
+
+
+/* =========================
+   mouseDown()
+========================= */
+
+expr = expr.replace(
+    /mouseDown\(\s*["'](left|middle|right)["']\s*\)/g,
+    (_, button) => {
+
+        return mouseButtons[button] === true
+            ? "true"
+            : "false";
+
+    }
+);
+    /* =========================
+   mouseClick()
+========================= */
+
+expr = expr.replace(
+    /mouseClick\(\s*["'](left|middle|right)["']\s*\)/g,
+    (_, button) => {
+
+        const clicked =
+            mouseClicks[button] === true;
+
+        mouseClicks[button] = false;
+
+        return clicked
+            ? "true"
+            : "false";
+
+    }
+);
     /* =========================
        const
     ========================= */
@@ -4693,23 +4831,42 @@ document.addEventListener("keydown", (e) => {
         document.getElementById("helpPanel")?.classList.remove("open");
     }
 });
-document.addEventListener(
-    "keydown",
-    e => {
+/* =====================================================
+   STar Keyboard
+===================================================== */
 
-        keys[e.key] = true;
+document.addEventListener("keydown", e => {
 
+    keys[e.key] = true;
+
+    /*
+       ゲームで使いやすい別名
+    */
+
+    if (e.key === " ") {
+        keys["Space"] = true;
     }
-);
 
-document.addEventListener(
-    "keyup",
-    e => {
-
-        keys[e.key] = false;
-
+    if (e.key === "Enter") {
+        keys["Enter"] = true;
     }
-);
+
+});
+
+
+document.addEventListener("keyup", e => {
+
+    keys[e.key] = false;
+
+    if (e.key === " ") {
+        keys["Space"] = false;
+    }
+
+    if (e.key === "Enter") {
+        keys["Enter"] = false;
+    }
+
+});
 document.addEventListener(
     "mousemove",
     e => {
