@@ -2259,7 +2259,7 @@ if (
     }
 
 
-    /* =========================
+  /* =========================
    canvas text
 ========================= */
 
@@ -2269,9 +2269,18 @@ if (
     )
 ) {
 
+    /*
+     * 対応形式
+     *
+     * canvas text "Hello World" 100 100
+     * canvas text name 100 100
+     * canvas text `Score: ${score}` 100 100
+     * canvas text score 100 100 30
+     */
+
     const match =
         canvasCommand.match(
-            /^text\s+"([\s\S]*?)"\s+(\S+)\s+(\S+)(?:\s+(\S+))?$/
+            /^text\s+(?:"([\s\S]*?)"|`([\s\S]*?)`|(\S+))\s+(\S+)\s+(\S+)(?:\s+(\S+))?$/
         );
 
     if (!match) {
@@ -2285,28 +2294,104 @@ if (
         continue;
     }
 
-    const text =
-        match[1];
+
+    /* =========================
+       文字
+    ========================= */
+
+    let text;
+
+
+    /*
+     * "Hello World"
+     */
+
+    if (
+        match[1] !== undefined
+    ) {
+
+        text =
+            match[1];
+
+    }
+
+
+    /*
+     * `Score: ${score}`
+     */
+
+    else if (
+        match[2] !== undefined
+    ) {
+
+        text =
+            evalExpr(
+                "`" +
+                match[2] +
+                "`",
+                vars
+            );
+
+    }
+
+
+    /*
+     * 変数
+     *
+     * name
+     * score
+     * message
+     */
+
+    else {
+
+        text =
+            evalExpr(
+                match[3],
+                vars
+            );
+
+    }
+
+
+    /* =========================
+       X
+    ========================= */
 
     const x =
         evalExpr(
-            match[2],
+            match[4],
             vars
         );
+
+
+    /* =========================
+       Y
+    ========================= */
 
     const y =
         evalExpr(
-            match[3],
+            match[5],
             vars
         );
 
+
+    /* =========================
+       サイズ
+    ========================= */
+
     const size =
-        match[4]
+        match[6]
             ? evalExpr(
-                match[4],
+                match[6],
                 vars
             )
             : 20;
+
+
+    /* =========================
+       描画
+    ========================= */
 
     starCanvasText(
         text,
