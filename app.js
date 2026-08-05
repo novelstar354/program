@@ -1,5 +1,5 @@
 /* =====================================================
-STar IDE Ultimate
+STar IDE 
 app.js
 ===================================================== */
 
@@ -44,9 +44,10 @@ let starCanvasStroke = "#ffffff";
 let starCanvasFont = "20px sans-serif";
 let starCanvasLineWidth = 1;
 /* =====================================================
-   STar CANVAS SYSTEM
+   STar Canvas Objects
 ===================================================== */
 
+const starCanvasObjects = {};
 /* =====================================================
    STar CANVAS SYSTEM
 ===================================================== */
@@ -448,7 +449,52 @@ starCtx.font =
     return starCanvas;
 }
 
+/* =====================================================
+   STar Canvas Object
+===================================================== */
 
+function createStarCanvasObject(name, properties = {}) {
+
+    if (!name) {
+        throw new Error(
+            "Canvas object requires a name."
+        );
+    }
+
+    starCanvasObjects[name] = {
+
+        name: name,
+
+        x:
+            Number(properties.x ?? 0),
+
+        y:
+            Number(properties.y ?? 0),
+
+        width:
+            Number(properties.width ?? 50),
+
+        height:
+            Number(properties.height ?? 50),
+
+        fill:
+            properties.fill ??
+            "#ffffff",
+
+        visible:
+            properties.visible !== undefined
+                ? Boolean(properties.visible)
+                : true,
+
+        opacity:
+            properties.opacity !== undefined
+                ? Number(properties.opacity)
+                : 1
+
+    };
+
+    return starCanvasObjects[name];
+}
 /* Canvas取得 */
 
 function requireStarCanvas() {
@@ -585,7 +631,65 @@ function starCanvasRect(
     );
 }
 
+/* =====================================================
+   STar Canvas Object Draw
+===================================================== */
 
+function drawStarCanvasObject(name) {
+
+    requireStarCanvas();
+
+    const object =
+        starCanvasObjects[name];
+
+    if (!object) {
+
+        throw new Error(
+            `Canvas object not found: ${name}`
+        );
+
+    }
+
+    /* 非表示 */
+    if (object.visible === false) {
+        return;
+    }
+
+    /* 透明度 */
+    const oldAlpha =
+        starCtx.globalAlpha;
+
+    starCtx.globalAlpha =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                Number(object.opacity ?? 1)
+            )
+        );
+
+    /* 色 */
+    const oldFill =
+        starCtx.fillStyle;
+
+    starCtx.fillStyle =
+        object.fill ?? "#ffffff";
+
+    /* 描画 */
+    starCtx.fillRect(
+        Number(object.x) || 0,
+        Number(object.y) || 0,
+        Number(object.width) || 50,
+        Number(object.height) || 50
+    );
+
+    /* Canvas状態を戻す */
+    starCtx.fillStyle =
+        oldFill;
+
+    starCtx.globalAlpha =
+        oldAlpha;
+}
 /* 塗りつぶし四角形 */
 
 function starCanvasFillRect(
@@ -1903,7 +2007,95 @@ if (
         continue;
     }
 
+/* =========================
+   canvas object
+========================= */
 
+if (
+    canvasCommand.startsWith("object ")
+) {
+
+    const match =
+        canvasCommand.match(
+            /^object\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Canvas object syntax: canvas object name {",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const objectName =
+        match[1];
+
+    const result =
+        getBlock(i + 1);
+
+    const properties = {};
+
+    const propertyLines =
+        result.block.split("\n");
+
+    for (
+        let p = 0;
+        p < propertyLines.length;
+        p++
+    ) {
+
+        const propertyLine =
+            propertyLines[p].trim();
+
+        if (!propertyLine)
+            continue;
+
+        if (propertyLine.startsWith("#"))
+            continue;
+
+        const propertyMatch =
+            propertyLine.match(
+                /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/
+            );
+
+        if (!propertyMatch) {
+
+            runtimeError(
+                `Invalid Canvas object property: ${propertyLine}`,
+                lineNumber + p + 1,
+                propertyLine
+            );
+
+            continue;
+        }
+
+        const propertyName =
+            propertyMatch[1];
+
+        const propertyValue =
+            propertyMatch[2].trim();
+
+        properties[propertyName] =
+            evalExpr(
+                propertyValue,
+                vars
+            );
+    }
+
+    createStarCanvasObject(
+        objectName,
+        properties
+    );
+
+    i =
+        result.end;
+
+    continue;
+}
     /* =========================
        canvas clear
     ========================= */
@@ -1915,7 +2107,51 @@ if (
         continue;
     }
 
+/* =========================
+   canvas draw
+========================= */
 
+if (
+    canvasCommand.startsWith(
+        "draw "
+    )
+) {
+
+    const name =
+        canvasCommand
+            .substring(5)
+            .trim();
+
+    if (!name) {
+
+        runtimeError(
+            "Canvas draw requires an object name",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    try {
+
+        drawStarCanvasObject(
+            name
+        );
+
+    }
+    catch (err) {
+
+        runtimeError(
+            err.message,
+            lineNumber,
+            line
+        );
+
+    }
+
+    continue;
+}
     /* =========================
        canvas show
     ========================= */
