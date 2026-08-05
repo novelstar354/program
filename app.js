@@ -4407,7 +4407,7 @@ const duration =
 
 const canvasObjectRotate =
     line.match(
-        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+rotate\s+(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s+(\d+(?:\.\d+)?)(ms|s|m))?$/
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+rotate\s+(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s+(\S+))?$/
     );
 
 if (canvasObjectRotate) {
@@ -4422,16 +4422,9 @@ if (canvasObjectRotate) {
 
     let duration = null;
 
-    if (canvasObjectRotate[3]) {
-
-        duration =
-            canvasObjectRotate[3] +
-            (
-                canvasObjectRotate[4] ||
-                "ms"
-            );
-
-    }
+if (canvasObjectRotate[3]) {
+    duration = canvasObjectRotate[3];
+}
 
 
     try {
