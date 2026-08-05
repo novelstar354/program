@@ -1944,7 +1944,154 @@ const deferBlocks = [];
 
     if (!line) continue;
     if (line.startsWith("#")) continue;
+/* =========================
+   canvas object distance
+========================= */
 
+if (
+    canvasCommand.startsWith("object ") &&
+    canvasCommand.includes(" distance ")
+) {
+
+    const match =
+        canvasCommand.match(
+            /^object\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+distance\s+([a-zA-Z_][a-zA-Z0-9_]*)$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Canvas object distance syntax: canvas objectA distance canvas objectB",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const objectA =
+        vars[match[1]] ||
+        starCanvasObjects[match[1]];
+
+    const objectB =
+        vars[match[2]] ||
+        starCanvasObjects[match[2]];
+
+    if (!objectA || !objectB) {
+
+        runtimeError(
+            "Canvas object not found",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const ax =
+        Number(objectA.x ?? objectA.position?.x ?? 0);
+
+    const ay =
+        Number(objectA.y ?? objectA.position?.y ?? 0);
+
+    const bx =
+        Number(objectB.x ?? objectB.position?.x ?? 0);
+
+    const by =
+        Number(objectB.y ?? objectB.position?.y ?? 0);
+
+    const distance =
+        Math.hypot(
+            bx - ax,
+            by - ay
+        );
+
+    vars.__canvasDistance =
+        distance;
+
+    continue;
+}
+
+
+/* =========================
+   canvas object collision
+========================= */
+
+if (
+    canvasCommand.startsWith("object ") &&
+    canvasCommand.includes(" collision ")
+) {
+
+    const match =
+        canvasCommand.match(
+            /^object\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+collision\s+([a-zA-Z_][a-zA-Z0-9_]*)$/
+        );
+
+    if (!match) {
+
+        runtimeError(
+            "Canvas object collision syntax: canvas objectA collision canvas objectB",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const objectA =
+        vars[match[1]] ||
+        starCanvasObjects[match[1]];
+
+    const objectB =
+        vars[match[2]] ||
+        starCanvasObjects[match[2]];
+
+    if (!objectA || !objectB) {
+
+        runtimeError(
+            "Canvas object not found",
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+    const ax =
+        Number(objectA.x ?? objectA.position?.x ?? 0);
+
+    const ay =
+        Number(objectA.y ?? objectA.position?.y ?? 0);
+
+    const aw =
+        Number(objectA.width ?? objectA.size?.width ?? 0);
+
+    const ah =
+        Number(objectA.height ?? objectA.size?.height ?? 0);
+
+    const bx =
+        Number(objectB.x ?? objectB.position?.x ?? 0);
+
+    const by =
+        Number(objectB.y ?? objectB.position?.y ?? 0);
+
+    const bw =
+        Number(objectB.width ?? objectB.size?.width ?? 0);
+
+    const bh =
+        Number(objectB.height ?? objectB.size?.height ?? 0);
+
+    const collision =
+        ax < bx + bw &&
+        ax + aw > bx &&
+        ay < by + bh &&
+        ay + ah > by;
+
+    vars.__canvasCollision =
+        collision;
+
+    continue;
+}
     /* =====================================================
    CANVAS
 ===================================================== */
