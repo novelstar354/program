@@ -48,6 +48,7 @@ let starCanvasLineWidth = 1;
 ===================================================== */
 
 const starCanvasObjects = {};
+const starCanvasObjectAnimations = {};
 /* =====================================================
    STar CANVAS SYSTEM
 ===================================================== */
@@ -539,10 +540,55 @@ function requireStarCanvas() {
    STar Canvas Object Move
 ===================================================== */
 
-function moveStarCanvasObject(
+function parseStarAnimationDuration(value) {
+
+    if (value === undefined || value === null) {
+        return 0;
+    }
+
+    const text =
+        String(value)
+            .trim()
+            .toLowerCase();
+
+    const match =
+        text.match(
+            /^(-?(?:\d+(?:\.\d+)?|\.\d+))\s*(ms|s|m)?$/
+        );
+
+    if (!match) {
+        return Number(value) || 0;
+    }
+
+    const number =
+        Number(match[1]);
+
+    const unit =
+        match[2] || "ms";
+
+    if (unit === "ms") {
+        return number;
+    }
+
+    if (unit === "s") {
+        return number * 1000;
+    }
+
+    if (unit === "m") {
+        return number * 60000;
+    }
+
+    return number;
+}
+
+
+function animateStarCanvasObject(
     name,
-    direction,
-    amount
+    type,
+    value,
+    duration,
+    animationTime,
+    animationKey
 ) {
 
     const object =
@@ -556,66 +602,431 @@ function moveStarCanvasObject(
 
     }
 
-    amount =
-        Number(amount) || 0;
+    const durationMs =
+        Math.max(
+            0,
+            parseStarAnimationDuration(duration)
+        );
 
-    let dx = 0;
-    let dy = 0;
+    const time =
+        Math.max(
+            0,
+            Number(animationTime) || 0
+        );
 
 
-    switch (direction) {
+    const key =
+        `${name}:${type}:${animationKey}`;
 
-        case "right":
-            dx = amount;
-            break;
 
-        case "left":
-            dx = -amount;
-            break;
+    /* =========================
+       即時変更
+    ========================= */
 
-        case "down":
-            dy = amount;
-            break;
+    if (durationMs <= 0) {
 
-        case "up":
-            dy = -amount;
-            break;
+        if (type === "move") {
 
-        default:
+            const amount =
+                Number(value.amount) || 0;
 
-            throw new Error(
-                `Unknown move direction: ${direction}`
-            );
+            const dx =
+                value.direction === "right"
+                    ? amount
+                    : value.direction === "left"
+                        ? -amount
+                        : 0;
+
+            const dy =
+                value.direction === "down"
+                    ? amount
+                    : value.direction === "up"
+                        ? -amount
+                        : 0;
+
+            object.x =
+                Number(object.x || 0) + dx;
+
+            object.y =
+                Number(object.y || 0) + dy;
+
+            if (Array.isArray(object.points)) {
+
+                object.points =
+                    object.points.map(point => [
+                        Number(point[0]) + dx,
+                        Number(point[1]) + dy
+                    ]);
+
+            }
+        }
+
+
+        if (type === "rotate") {
+
+            object.rotate =
+                Number(value);
+
+            object.angle =
+                Number(value);
+
+        }
+
+
+        if (type === "fadein") {
+
+            object.opacity = 1;
+
+        }
+
+
+        if (type === "fadeout") {
+
+            object.opacity = 0;
+
+        }
+
+        return object;
+    }
+
+
+    /* =========================
+       初回
+    ========================= */
+
+    let animation =
+        starCanvasObjectAnimations[key];
+
+
+    if (
+        !animation ||
+        animation.completed
+    ) {
+
+        animation = {
+
+            type: type,
+
+            startTime:
+                time,
+
+            duration:
+                durationMs,
+
+            completed:
+                false
+
+        };
+
+
+        if (type === "move") {
+
+            const amount =
+                Number(value.amount) || 0;
+
+            animation.startX =
+                Number(object.x || 0);
+
+            animation.startY =
+                Number(object.y || 0);
+
+            animation.endX =
+                animation.startX;
+
+            animation.endY =
+                animation.startY;
+
+
+            if (value.direction === "right") {
+                animation.endX += amount;
+            }
+
+            if (value.direction === "left") {
+                animation.endX -= amount;
+            }
+
+            if (value.direction === "down") {
+                animation.endY += amount;
+            }
+
+            if (value.direction === "up") {
+                animation.endY -= amount;
+            }
+
+
+            if (Array.isArray(object.points)) {
+
+                animation.startPoints =
+                    object.points.map(
+                        point => [
+                            Number(point[0]),
+                            Number(point[1])
+                        ]
+                    );
+
+                animation.endPoints =
+                    animation.startPoints.map(
+                        point => [
+                            point[0] +
+                                (animation.endX -
+                                 animation.startX),
+
+                            point[1] +
+                                (animation.endY -
+                                 animation.startY)
+                        ]
+                    );
+
+            }
+
+        }
+
+
+        if (type === "rotate") {
+
+            animation.startAngle =
+                Number(
+                    object.rotate ??
+                    object.angle ??
+                    0
+                );
+
+            animation.endAngle =
+                Number(value);
+
+        }
+
+
+        if (type === "fadein") {
+
+            animation.startOpacity =
+                Number(object.opacity ?? 0);
+
+            animation.endOpacity =
+                1;
+
+        }
+
+
+        if (type === "fadeout") {
+
+            animation.startOpacity =
+                Number(object.opacity ?? 1);
+
+            animation.endOpacity =
+                0;
+
+        }
+
+
+        starCanvasObjectAnimations[key] =
+            animation;
 
     }
 
 
     /* =========================
-       通常の座標
+       進行度
     ========================= */
 
-    object.x =
-        Number(object.x || 0) + dx;
+    const elapsed =
+        time -
+        animation.startTime;
 
-    object.y =
-        Number(object.y || 0) + dy;
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                elapsed /
+                animation.duration
+            )
+        );
 
 
     /* =========================
-       多角形の座標
+       なめらかな補間
+       easeInOut
     ========================= */
 
-    if (
-        Array.isArray(object.points)
-    ) {
+    const eased =
+        progress < 0.5
+            ? 2 * progress * progress
+            : 1 -
+              Math.pow(
+                  -2 * progress + 2,
+                  2
+              ) / 2;
 
-        object.points =
-            object.points.map(
-                point => [
-                    Number(point[0]) + dx,
-                    Number(point[1]) + dy
-                ]
-            );
+
+    /* =========================
+       MOVE
+    ========================= */
+
+    if (type === "move") {
+
+        object.x =
+            animation.startX +
+            (
+                animation.endX -
+                animation.startX
+            ) * eased;
+
+        object.y =
+            animation.startY +
+            (
+                animation.endY -
+                animation.startY
+            ) * eased;
+
+
+        if (
+            Array.isArray(
+                animation.startPoints
+            )
+        ) {
+
+            object.points =
+                animation.startPoints.map(
+                    (point, index) => [
+
+                        point[0] +
+                        (
+                            animation.endPoints[index][0] -
+                            point[0]
+                        ) * eased,
+
+                        point[1] +
+                        (
+                            animation.endPoints[index][1] -
+                            point[1]
+                        ) * eased
+
+                    ]
+                );
+
+        }
+
+    }
+
+
+    /* =========================
+       ROTATE
+    ========================= */
+
+    if (type === "rotate") {
+
+        const angle =
+            animation.startAngle +
+            (
+                animation.endAngle -
+                animation.startAngle
+            ) * eased;
+
+        object.rotate =
+            angle;
+
+        object.angle =
+            angle;
+
+    }
+
+
+    /* =========================
+       FADE IN
+    ========================= */
+
+    if (type === "fadein") {
+
+        object.opacity =
+            animation.startOpacity +
+            (
+                animation.endOpacity -
+                animation.startOpacity
+            ) * eased;
+
+    }
+
+
+    /* =========================
+       FADE OUT
+    ========================= */
+
+    if (type === "fadeout") {
+
+        object.opacity =
+            animation.startOpacity +
+            (
+                animation.endOpacity -
+                animation.startOpacity
+            ) * eased;
+
+    }
+
+
+    /* =========================
+       完了
+    ========================= */
+
+    if (progress >= 1) {
+
+        animation.completed =
+            true;
+
+        if (type === "move") {
+
+            object.x =
+                animation.endX;
+
+            object.y =
+                animation.endY;
+
+            if (
+                Array.isArray(
+                    animation.endPoints
+                )
+            ) {
+
+                object.points =
+                    animation.endPoints.map(
+                        point => [
+                            point[0],
+                            point[1]
+                        ]
+                    );
+
+            }
+
+        }
+
+
+        if (type === "rotate") {
+
+            object.rotate =
+                animation.endAngle;
+
+            object.angle =
+                animation.endAngle;
+
+        }
+
+
+        if (
+            type === "fadein"
+        ) {
+
+            object.opacity = 1;
+
+        }
+
+
+        if (
+            type === "fadeout"
+        ) {
+
+            object.opacity = 0;
+
+        }
 
     }
 
@@ -956,12 +1367,40 @@ function drawStarCanvasObject(name) {
        通常の四角形
     ========================= */
 
-    starCtx.fillRect(
-        Number(object.x) || 0,
-        Number(object.y) || 0,
-        Number(object.width) || 50,
-        Number(object.height) || 50
+    starCtx.save();
+
+const angle =
+    Number(
+        object.rotate ??
+        object.angle ??
+        0
     );
+
+const centerX =
+    Number(object.x || 0) +
+    Number(object.width || 50) / 2;
+
+const centerY =
+    Number(object.y || 0) +
+    Number(object.height || 50) / 2;
+
+starCtx.translate(
+    centerX,
+    centerY
+);
+
+starCtx.rotate(
+    angle * Math.PI / 180
+);
+
+starCtx.fillRect(
+    -Number(object.width || 50) / 2,
+    -Number(object.height || 50) / 2,
+    Number(object.width || 50),
+    Number(object.height || 50)
+);
+
+starCtx.restore();
 
 
     starCtx.restore();
@@ -3601,34 +4040,217 @@ if (
     continue;
 }
     /* =====================================================
-   Canvas Object Move
+   Canvas Object Animation
 ===================================================== */
 
-const canvasObjectMove =
+const canvasObjectAnimation =
     line.match(
-        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+move\s+(right|left|up|down)\s+(.+)$/
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(move)\s+(right|left|up|down)\s+(\S+)(?:\s+(\S+))?$/
     );
 
-if (canvasObjectMove) {
+
+if (canvasObjectAnimation) {
 
     const objectName =
-        canvasObjectMove[1];
+        canvasObjectAnimation[1];
 
     const direction =
-        canvasObjectMove[2];
+        canvasObjectAnimation[3];
 
     const amount =
         evalExpr(
-            canvasObjectMove[3],
+            canvasObjectAnimation[4],
             vars
         );
 
+    const duration =
+        canvasObjectAnimation[5];
+
+
     try {
 
-        moveStarCanvasObject(
+        animateStarCanvasObject(
+
             objectName,
-            direction,
-            amount
+
+            "move",
+
+            {
+                direction:
+                    direction,
+
+                amount:
+                    amount
+            },
+
+            duration,
+
+            vars.time,
+
+            lineNumber
+
+        );
+
+    }
+    catch (err) {
+
+        runtimeError(
+            err.message,
+            lineNumber,
+            line
+        );
+
+    }
+
+    continue;
+}
+
+
+/* =========================
+   rotate
+========================= */
+
+const canvasObjectRotate =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+rotate\s+(.+?)(?:\s+(\S+))?$/
+    );
+
+
+if (canvasObjectRotate) {
+
+    const objectName =
+        canvasObjectRotate[1];
+
+    const angle =
+        evalExpr(
+            canvasObjectRotate[2],
+            vars
+        );
+
+    const duration =
+        canvasObjectRotate[3];
+
+
+    try {
+
+        animateStarCanvasObject(
+
+            objectName,
+
+            "rotate",
+
+            angle,
+
+            duration,
+
+            vars.time,
+
+            lineNumber
+
+        );
+
+    }
+    catch (err) {
+
+        runtimeError(
+            err.message,
+            lineNumber,
+            line
+        );
+
+    }
+
+    continue;
+}
+
+
+/* =========================
+   fadein
+========================= */
+
+const canvasObjectFadeIn =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+fadein(?:\s+(\S+))?$/
+    );
+
+
+if (canvasObjectFadeIn) {
+
+    const objectName =
+        canvasObjectFadeIn[1];
+
+    const duration =
+        canvasObjectFadeIn[2];
+
+
+    try {
+
+        animateStarCanvasObject(
+
+            objectName,
+
+            "fadein",
+
+            1,
+
+            duration,
+
+            vars.time,
+
+            lineNumber
+
+        );
+
+    }
+    catch (err) {
+
+        runtimeError(
+            err.message,
+            lineNumber,
+            line
+        );
+
+    }
+
+    continue;
+}
+
+
+/* =========================
+   fadeout
+========================= */
+
+const canvasObjectFadeOut =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+fadeout(?:\s+(\S+))?$/
+    );
+
+
+if (canvasObjectFadeOut) {
+
+    const objectName =
+        canvasObjectFadeOut[1];
+
+    const duration =
+        canvasObjectFadeOut[2];
+
+
+    try {
+
+        animateStarCanvasObject(
+
+            objectName,
+
+            "fadeout",
+
+            0,
+
+            duration,
+
+            vars.time,
+
+            lineNumber
+
         );
 
     }
