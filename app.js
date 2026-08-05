@@ -811,17 +811,18 @@ else {
 
         if (type === "rotate") {
 
-            animation.startAngle =
-                Number(
-                    object.rotate ??
-                    object.angle ??
-                    0
-                );
+    animation.startAngle =
+        Number(
+            object.rotate ??
+            object.angle ??
+            0
+        );
 
-            animation.endAngle =
-                Number(value);
+    animation.endAngle =
+        animation.startAngle +
+        Number(value);
 
-        }
+}
 
 
         if (type === "fadein") {
@@ -4077,6 +4078,24 @@ const canvasObjectProperty =
 
 if (canvasObjectProperty) {
 
+    const propertyName =
+        canvasObjectProperty[2];
+
+    const propertyValue =
+        canvasObjectProperty[3].trim();
+
+    // rotate のアニメーション
+    // player rotate 360 2s
+    // はプロパティ変更として扱わない
+    if (
+        propertyName === "rotate" &&
+        propertyValue.split(/\s+/).length >= 2
+    ) {
+        // この処理をスキップして
+        // Canvas Object Animation へ進む
+    }
+    else {
+
     const objectName =
         canvasObjectProperty[1];
 
@@ -4099,7 +4118,7 @@ if (canvasObjectProperty) {
 
         continue;
     }
-
+}
 
     /* =========================
        position
@@ -4334,6 +4353,7 @@ if (canvasObjectProperty) {
         continue;
     }
 }
+        
     /* =====================================================
    Canvas Object Animation
 ===================================================== */
@@ -4420,11 +4440,8 @@ if (canvasObjectRotate) {
             canvasObjectRotate[2]
         );
 
-    let duration = null;
-
-if (canvasObjectRotate[3]) {
-    duration = canvasObjectRotate[3];
-}
+    const duration =
+    canvasObjectRotate[3] || null;
 
 
     try {
