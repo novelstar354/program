@@ -758,6 +758,31 @@ canvas animate frame {
     canvass fillCircle 400 250 50
 }
 
+#canvas object
+canvas object player{
+    x 400
+    y 250
+
+    width 50
+    height 50
+
+    fill "#00e5ff"
+}
+
+canvas draw player
+
+objectに入るプロパティ
+    x,y 座標
+    width,height 大きさ
+    visible:描画されるかされないかでtrueかfalse
+    opacity:透明度で1が最大
+
+objectにできること
+    move:オブジェクト名 move 向き(right,left,up,down) 距離
+
+※変数が使えます。
+    
+
 (frameには30,60,120のいずれかが入り、デフォルトは60です。)
 ※アニメーション中はframe,timeという変数ができ、frameはフレームごとに、timeは1msごとに増えていきます。
 ※アニメーションは指定したフレームごとに{}内の処理を行うという構文です。
