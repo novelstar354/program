@@ -758,36 +758,50 @@ canvas animate frame {
     canvass fillCircle 400 250 50
 }
 
-#canvas object
-canvas object player{
-    x 400
-    y 250
-
-    width 50
-    height 50
-
-    fill "#00e5ff"
-}
-
-canvas draw player
-
-objectに入るプロパティ
-    x,y 座標
-    width,height 大きさ
-    visible:描画されるかされないかでtrueかfalse
-    opacity:透明度で1が最大
-
-objectにできること
-    move:オブジェクト名 move 向き(right,left,up,down) 距離
-
 ※変数が使えます。
-    
 
 (frameには30,60,120のいずれかが入り、デフォルトは60です。)
 ※アニメーション中はframe,timeという変数ができ、frameはフレームごとに、timeは1msごとに増えていきます。
 ※アニメーションは指定したフレームごとに{}内の処理を行うという構文です。
 
 canvas stop
+(アニメーションを停止させます。)
+
+#canvas 標準アニメーション
+object1 move 向き 距離
+(向きにはright,up,down,leftまたは角度が入ります。)
+
+object1 rotate 角度 全体にかかる時間
+
+object1 fadein 1s
+object1 fadeout 1s
+
+#canvas object
+canvas object player{
+    position 200 500
+    shape rect
+
+    points x1 y1 x2 y2
+    
+    fill "#00e5ff"
+}
+
+canvas draw player
+
+objectに入るプロパティ
+    position: 座標
+    shape: 形{rect:長方形(pointsに左上と右下の座標),circle:円(sizeの代わりにradius,triangle:三角形(pointsに上、左、右の座標),polygon:多角形(pointsに好きな数の座標)}
+    visible: 描画されるかされないかでtrueかfalseをつける。
+    opacity: opacity 透明度で透明度を設定できる。1が最大
+    rotate: rotate 角度で回転を設定できる。
+    
+objectにできること
+    draw: 描画
+    move: オブジェクト名 move 向き(right,left,up,down) 距離
+    distance: let d = オブジェクト1 distance オブジェクト2でオブジェクト1からオブジェクト2の中心座標の距離を取得
+    collision: let hit = オブジェクト1 collision オブジェクト2でオブジェクト1とオブジェクト2が重なっているかを調べ、trueかfalseを返す。
+
+※変数が使えます。
 
 #インポート
 import "config.star"
