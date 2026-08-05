@@ -507,7 +507,57 @@ function requireStarCanvas() {
 
     return true;
 }
+/* =====================================================
+   STar Canvas Object Move
+===================================================== */
 
+function moveStarCanvasObject(
+    name,
+    direction,
+    amount
+) {
+
+    const object =
+        starCanvasObjects[name];
+
+    if (!object) {
+
+        throw new Error(
+            `Canvas object not found: ${name}`
+        );
+
+    }
+
+    amount =
+        Number(amount) || 0;
+
+    switch (direction) {
+
+        case "right":
+            object.x += amount;
+            break;
+
+        case "left":
+            object.x -= amount;
+            break;
+
+        case "down":
+            object.y += amount;
+            break;
+
+        case "up":
+            object.y -= amount;
+            break;
+
+        default:
+            throw new Error(
+                `Unknown move direction: ${direction}`
+            );
+
+    }
+
+    return object;
+}
 
 /* Canvas削除 */
 
@@ -2956,6 +3006,50 @@ if (
         lineNumber,
         line
     );
+
+    continue;
+}
+    /* =====================================================
+   Canvas Object Move
+===================================================== */
+
+const canvasObjectMove =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+move\s+(right|left|up|down)\s+(.+)$/
+    );
+
+if (canvasObjectMove) {
+
+    const objectName =
+        canvasObjectMove[1];
+
+    const direction =
+        canvasObjectMove[2];
+
+    const amount =
+        evalExpr(
+            canvasObjectMove[3],
+            vars
+        );
+
+    try {
+
+        moveStarCanvasObject(
+            objectName,
+            direction,
+            amount
+        );
+
+    }
+    catch (err) {
+
+        runtimeError(
+            err.message,
+            lineNumber,
+            line
+        );
+
+    }
 
     continue;
 }
