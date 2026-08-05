@@ -490,7 +490,18 @@ function createStarCanvasObject(name, properties = {}) {
         height: height,
 
         angle:
-            Number(properties.angle ?? 0),
+    Number(
+        properties.angle ??
+        properties.rotate ??
+        0
+    ),
+
+rotate:
+    Number(
+        properties.rotate ??
+        properties.angle ??
+        0
+    ),
 
         points: points,
 
@@ -797,8 +808,12 @@ function drawStarCanvasObject(name) {
     ========================= */
 
     if (
-        Number(object.angle) !== 0
-    ) {
+    Number(
+        object.rotate ??
+        object.angle ??
+        0
+    ) !== 0
+) {
 
         const centerX =
             Number(object.x) +
@@ -814,9 +829,13 @@ function drawStarCanvasObject(name) {
         );
 
         starCtx.rotate(
-            Number(object.angle) *
-            Math.PI / 180
-        );
+    Number(
+        object.rotate ??
+        object.angle ??
+        0
+    ) *
+    Math.PI / 180
+);
 
         starCtx.translate(
             -centerX,
