@@ -461,21 +461,38 @@ function createStarCanvasObject(name, properties = {}) {
         );
     }
 
+    let x = Number(properties.x ?? 0);
+    let y = Number(properties.y ?? 0);
+
+    let width =
+        Number(properties.width ?? 50);
+
+    let height =
+        Number(properties.height ?? 50);
+
+    let points =
+        Array.isArray(properties.points)
+            ? properties.points
+            : null;
+
     starCanvasObjects[name] = {
 
         name: name,
 
-        x:
-            Number(properties.x ?? 0),
+        type:
+            String(properties.type ?? "rectangle")
+                .toLowerCase(),
 
-        y:
-            Number(properties.y ?? 0),
+        x: x,
+        y: y,
 
-        width:
-            Number(properties.width ?? 50),
+        width: width,
+        height: height,
 
-        height:
-            Number(properties.height ?? 50),
+        angle:
+            Number(properties.angle ?? 0),
+
+        points: points,
 
         fill:
             properties.fill ??
@@ -531,30 +548,66 @@ function moveStarCanvasObject(
     amount =
         Number(amount) || 0;
 
+    let dx = 0;
+    let dy = 0;
+
+
     switch (direction) {
 
         case "right":
-            object.x += amount;
+            dx = amount;
             break;
 
         case "left":
-            object.x -= amount;
+            dx = -amount;
             break;
 
         case "down":
-            object.y += amount;
+            dy = amount;
             break;
 
         case "up":
-            object.y -= amount;
+            dy = -amount;
             break;
 
         default:
+
             throw new Error(
                 `Unknown move direction: ${direction}`
             );
 
     }
+
+
+    /* =========================
+       通常の座標
+    ========================= */
+
+    object.x =
+        Number(object.x || 0) + dx;
+
+    object.y =
+        Number(object.y || 0) + dy;
+
+
+    /* =========================
+       多角形の座標
+    ========================= */
+
+    if (
+        Array.isArray(object.points)
+    ) {
+
+        object.points =
+            object.points.map(
+                point => [
+                    Number(point[0]) + dx,
+                    Number(point[1]) + dy
+                ]
+            );
+
+    }
+
 
     return object;
 }
@@ -700,14 +753,26 @@ function drawStarCanvasObject(name) {
 
     }
 
-    /* 非表示 */
+
+    /* =========================
+       非表示
+    ========================= */
+
     if (object.visible === false) {
         return;
     }
 
-    /* 透明度 */
-    const oldAlpha =
-        starCtx.globalAlpha;
+
+    /* =========================
+       Canvas状態保存
+    ========================= */
+
+    starCtx.save();
+
+
+    /* =========================
+       透明度
+    ========================= */
 
     starCtx.globalAlpha =
         Math.max(
@@ -718,14 +783,160 @@ function drawStarCanvasObject(name) {
             )
         );
 
-    /* 色 */
-    const oldFill =
-        starCtx.fillStyle;
+
+    /* =========================
+       色
+    ========================= */
 
     starCtx.fillStyle =
         object.fill ?? "#ffffff";
 
-    /* 描画 */
+
+    /* =========================
+       回転
+    ========================= */
+
+    if (
+        Number(object.angle) !== 0
+    ) {
+
+        const centerX =
+            Number(object.x) +
+            Number(object.width) / 2;
+
+        const centerY =
+            Number(object.y) +
+            Number(object.height) / 2;
+
+        starCtx.translate(
+            centerX,
+            centerY
+        );
+
+        starCtx.rotate(
+            Number(object.angle) *
+            Math.PI / 180
+        );
+
+        starCtx.translate(
+            -centerX,
+            -centerY
+        );
+    }
+
+
+    /* =========================
+       points がある場合
+    ========================= */
+
+    if (
+    Array.isArray(object.points)
+) {
+
+    const type =
+        String(object.type || "polygon")
+            .toLowerCase();
+
+
+    /* =========================
+       triangle
+    ========================= */
+
+    if (
+        type === "triangle" &&
+        object.points.length !== 3
+    ) {
+
+        starCtx.restore();
+
+        throw new Error(
+            `Canvas object '${name}' triangle requires exactly 3 points.`
+        );
+
+    }
+
+
+    /* =========================
+       rectangle
+    ========================= */
+
+    if (
+        (
+            type === "rectangle" ||
+            type === "rect"
+        ) &&
+        object.points.length !== 4
+    ) {
+
+        starCtx.restore();
+
+        throw new Error(
+            `Canvas object '${name}' rectangle requires exactly 4 points.`
+        );
+
+    }
+
+
+    /* =========================
+       polygon
+    ========================= */
+
+    if (
+        type === "polygon" &&
+        object.points.length < 3
+    ) {
+
+        starCtx.restore();
+
+        throw new Error(
+            `Canvas object '${name}' polygon requires at least 3 points.`
+        );
+
+    }
+
+
+    /* =========================
+       描画
+    ========================= */
+
+    if (object.points.length >= 3) {
+
+        starCtx.beginPath();
+
+        starCtx.moveTo(
+            Number(object.points[0][0]),
+            Number(object.points[0][1])
+        );
+
+        for (
+            let i = 1;
+            i < object.points.length;
+            i++
+        ) {
+
+            starCtx.lineTo(
+                Number(object.points[i][0]),
+                Number(object.points[i][1])
+            );
+
+        }
+
+        starCtx.closePath();
+
+        starCtx.fill();
+
+        starCtx.restore();
+
+        return;
+    }
+}
+
+
+    /* =========================
+       points がない場合
+       通常の四角形
+    ========================= */
+
     starCtx.fillRect(
         Number(object.x) || 0,
         Number(object.y) || 0,
@@ -733,12 +944,8 @@ function drawStarCanvasObject(name) {
         Number(object.height) || 50
     );
 
-    /* Canvas状態を戻す */
-    starCtx.fillStyle =
-        oldFill;
 
-    starCtx.globalAlpha =
-        oldAlpha;
+    starCtx.restore();
 }
 /* 塗りつぶし四角形 */
 
@@ -1944,7 +2151,16 @@ const deferBlocks = [];
 
     if (!line) continue;
     if (line.startsWith("#")) continue;
-/* =========================
+
+    /* =====================================================
+   CANVAS
+===================================================== */
+
+if (line.startsWith("canvas ")) {
+
+    const canvasCommand =
+        line.substring(7).trim();
+    /* =========================
    canvas object distance
 ========================= */
 
@@ -1953,15 +2169,27 @@ if (
     canvasCommand.includes(" distance ")
 ) {
 
-    const match =
-        canvasCommand.match(
-            /^object\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+distance\s+([a-zA-Z_][a-zA-Z0-9_]*)$/
-        );
+    const parts =
+        canvasCommand.split(/\s+/);
 
-    if (!match) {
+    const object1Name =
+        parts[1];
 
+    const distanceIndex =
+        parts.indexOf("distance");
+
+    const object2Name =
+        parts[distanceIndex + 1];
+
+    const object1 =
+        starCanvasObjects[object1Name];
+
+    const object2 =
+        starCanvasObjects[object2Name];
+
+    if (!object1) {
         runtimeError(
-            "Canvas object distance syntax: canvas objectA distance canvas objectB",
+            `Canvas object not found: ${object1Name}`,
             lineNumber,
             line
         );
@@ -1969,18 +2197,9 @@ if (
         continue;
     }
 
-    const objectA =
-        vars[match[1]] ||
-        starCanvasObjects[match[1]];
-
-    const objectB =
-        vars[match[2]] ||
-        starCanvasObjects[match[2]];
-
-    if (!objectA || !objectB) {
-
+    if (!object2) {
         runtimeError(
-            "Canvas object not found",
+            `Canvas object not found: ${object2Name}`,
             lineNumber,
             line
         );
@@ -1988,26 +2207,35 @@ if (
         continue;
     }
 
-    const ax =
-        Number(objectA.x ?? objectA.position?.x ?? 0);
+    const x1 =
+        Number(object1.x || 0) +
+        Number(object1.width || 0) / 2;
 
-    const ay =
-        Number(objectA.y ?? objectA.position?.y ?? 0);
+    const y1 =
+        Number(object1.y || 0) +
+        Number(object1.height || 0) / 2;
 
-    const bx =
-        Number(objectB.x ?? objectB.position?.x ?? 0);
+    const x2 =
+        Number(object2.x || 0) +
+        Number(object2.width || 0) / 2;
 
-    const by =
-        Number(objectB.y ?? objectB.position?.y ?? 0);
+    const y2 =
+        Number(object2.y || 0) +
+        Number(object2.height || 0) / 2;
+
+    const dx =
+        x2 - x1;
+
+    const dy =
+        y2 - y1;
 
     const distance =
-        Math.hypot(
-            bx - ax,
-            by - ay
+        Math.sqrt(
+            dx * dx +
+            dy * dy
         );
 
-    vars.__canvasDistance =
-        distance;
+    vars.distance = distance;
 
     continue;
 }
@@ -2022,15 +2250,27 @@ if (
     canvasCommand.includes(" collision ")
 ) {
 
-    const match =
-        canvasCommand.match(
-            /^object\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+collision\s+([a-zA-Z_][a-zA-Z0-9_]*)$/
-        );
+    const parts =
+        canvasCommand.split(/\s+/);
 
-    if (!match) {
+    const object1Name =
+        parts[1];
 
+    const collisionIndex =
+        parts.indexOf("collision");
+
+    const object2Name =
+        parts[collisionIndex + 1];
+
+    const object1 =
+        starCanvasObjects[object1Name];
+
+    const object2 =
+        starCanvasObjects[object2Name];
+
+    if (!object1) {
         runtimeError(
-            "Canvas object collision syntax: canvas objectA collision canvas objectB",
+            `Canvas object not found: ${object1Name}`,
             lineNumber,
             line
         );
@@ -2038,18 +2278,9 @@ if (
         continue;
     }
 
-    const objectA =
-        vars[match[1]] ||
-        starCanvasObjects[match[1]];
-
-    const objectB =
-        vars[match[2]] ||
-        starCanvasObjects[match[2]];
-
-    if (!objectA || !objectB) {
-
+    if (!object2) {
         runtimeError(
-            "Canvas object not found",
+            `Canvas object not found: ${object2Name}`,
             lineNumber,
             line
         );
@@ -2057,49 +2288,78 @@ if (
         continue;
     }
 
-    const ax =
-        Number(objectA.x ?? objectA.position?.x ?? 0);
 
-    const ay =
-        Number(objectA.y ?? objectA.position?.y ?? 0);
+    /* =========================
+       Objectの範囲を取得
+    ========================= */
 
-    const aw =
-        Number(objectA.width ?? objectA.size?.width ?? 0);
+    function getObjectBounds(object) {
 
-    const ah =
-        Number(objectA.height ?? objectA.size?.height ?? 0);
+        if (
+            Array.isArray(object.points) &&
+            object.points.length >= 3
+        ) {
 
-    const bx =
-        Number(objectB.x ?? objectB.position?.x ?? 0);
+            const xs =
+                object.points.map(
+                    point => Number(point[0])
+                );
 
-    const by =
-        Number(objectB.y ?? objectB.position?.y ?? 0);
+            const ys =
+                object.points.map(
+                    point => Number(point[1])
+                );
 
-    const bw =
-        Number(objectB.width ?? objectB.size?.width ?? 0);
+            return {
+                left: Math.min(...xs),
+                right: Math.max(...xs),
+                top: Math.min(...ys),
+                bottom: Math.max(...ys)
+            };
+        }
 
-    const bh =
-        Number(objectB.height ?? objectB.size?.height ?? 0);
+
+        return {
+            left:
+                Number(object.x || 0),
+
+            right:
+                Number(object.x || 0) +
+                Number(object.width || 0),
+
+            top:
+                Number(object.y || 0),
+
+            bottom:
+                Number(object.y || 0) +
+                Number(object.height || 0)
+        };
+    }
+
+
+    const a =
+        getObjectBounds(object1);
+
+    const b =
+        getObjectBounds(object2);
+
+
+    /* =========================
+       当たり判定
+    ========================= */
 
     const collision =
-        ax < bx + bw &&
-        ax + aw > bx &&
-        ay < by + bh &&
-        ay + ah > by;
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top;
 
-    vars.__canvasCollision =
+
+    vars.collision =
         collision;
 
     continue;
 }
-    /* =====================================================
-   CANVAS
-===================================================== */
-
-if (line.startsWith("canvas ")) {
-
-    const canvasCommand =
-        line.substring(7).trim();
 /* =========================
    canvas animate
 ========================= */
@@ -2236,33 +2496,83 @@ if (
 
     const properties = {};
 
-    const propertyLines =
-        result.block.split("\n");
+const propertyLines =
+    result.block.split("\n");
 
-    for (
-        let p = 0;
-        p < propertyLines.length;
-        p++
-    ) {
+for (
+    let p = 0;
+    p < propertyLines.length;
+    p++
+) {
 
-        const propertyLine =
-            propertyLines[p].trim();
+    const propertyLine =
+        propertyLines[p].trim();
 
-        if (!propertyLine)
-            continue;
+    if (!propertyLine)
+        continue;
 
-        if (propertyLine.startsWith("#"))
-            continue;
+    if (propertyLine.startsWith("#"))
+        continue;
 
-        const propertyMatch =
-            propertyLine.match(
-                /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/
-            );
+    const propertyMatch =
+        propertyLine.match(
+            /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/
+        );
 
-        if (!propertyMatch) {
+    if (!propertyMatch) {
+
+        runtimeError(
+            `Invalid Canvas object property: ${propertyLine}`,
+            lineNumber + p + 1,
+            propertyLine
+        );
+
+        continue;
+    }
+
+    const propertyName =
+        propertyMatch[1];
+
+    const propertyValue =
+        propertyMatch[2].trim();
+
+
+    /* =========================
+       type
+    ========================= */
+
+    if (propertyName === "type") {
+
+        properties.type =
+            propertyValue
+                .replace(/^["']|["']$/g, "")
+                .trim()
+                .toLowerCase();
+
+        continue;
+    }
+
+
+    /* =========================
+       points
+       
+       points x1 y1 x2 y2 x3 y3 ...
+    ========================= */
+
+    if (propertyName === "points") {
+
+        const args =
+            propertyValue
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (
+            args.length < 6 ||
+            args.length % 2 !== 0
+        ) {
 
             runtimeError(
-                `Invalid Canvas object property: ${propertyLine}`,
+                "Canvas object points requires x1 y1 x2 y2 x3 y3 ...",
                 lineNumber + p + 1,
                 propertyLine
             );
@@ -2270,18 +2580,133 @@ if (
             continue;
         }
 
-        const propertyName =
-            propertyMatch[1];
+        const points = [];
 
-        const propertyValue =
-            propertyMatch[2].trim();
+        for (
+            let j = 0;
+            j < args.length;
+            j += 2
+        ) {
 
-        properties[propertyName] =
-            evalExpr(
-                propertyValue,
-                vars
-            );
+            points.push([
+                Number(
+                    evalExpr(
+                        args[j],
+                        vars
+                    )
+                ),
+
+                Number(
+                    evalExpr(
+                        args[j + 1],
+                        vars
+                    )
+                )
+            ]);
+
+        }
+
+        properties.points =
+            points;
+
+        continue;
     }
+
+
+    /* =========================
+       position x y
+    ========================= */
+
+    if (propertyName === "position") {
+
+        const args =
+            propertyValue
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (args.length < 2) {
+
+            runtimeError(
+                "Canvas object position requires x y",
+                lineNumber + p + 1,
+                propertyLine
+            );
+
+            continue;
+        }
+
+        properties.x =
+            Number(
+                evalExpr(
+                    args[0],
+                    vars
+                )
+            );
+
+        properties.y =
+            Number(
+                evalExpr(
+                    args[1],
+                    vars
+                )
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       size width height
+    ========================= */
+
+    if (propertyName === "size") {
+
+        const args =
+            propertyValue
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (args.length < 2) {
+
+            runtimeError(
+                "Canvas object size requires width height",
+                lineNumber + p + 1,
+                propertyLine
+            );
+
+            continue;
+        }
+
+        properties.width =
+            Number(
+                evalExpr(
+                    args[0],
+                    vars
+                )
+            );
+
+        properties.height =
+            Number(
+                evalExpr(
+                    args[1],
+                    vars
+                )
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       その他
+    ========================= */
+
+    properties[propertyName] =
+        evalExpr(
+            propertyValue,
+            vars
+        );
+}
 
     createStarCanvasObject(
         objectName,
