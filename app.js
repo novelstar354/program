@@ -4076,25 +4076,42 @@ const canvasObjectProperty =
         /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(position|size|fill|opacity|rotate|angle|type|points)\s+(.+)$/
     );
 
-if (canvasObjectProperty) {
+if (
+    canvasObjectProperty &&
+    !(
+        (
+            canvasObjectProperty[2] === "rotate" ||
+            canvasObjectProperty[2] === "angle"
+        ) &&
+        canvasObjectProperty[3]
+            .trim()
+            .split(/\s+/)
+            .length >= 2
+    )
+) {
 
-    const propertyName =
+    const objectName =
+        canvasObjectProperty[1];
+
+    const property =
         canvasObjectProperty[2];
 
-    const propertyValue =
+    const valueText =
         canvasObjectProperty[3].trim();
 
-    // rotate のアニメーション
-    // player rotate 360 2s
-    // はプロパティ変更として扱わない
-    if (
-        propertyName === "rotate" &&
-        propertyValue.split(/\s+/).length >= 2
-    ) {
-        // この処理をスキップして
-        // Canvas Object Animation へ進む
-    }
-    else {
+    const object =
+        starCanvasObjects[objectName];
+
+    if (!object) {
+
+        runtimeError(
+            `Canvas object not found: ${objectName}`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }else {
 
     const objectName =
         canvasObjectProperty[1];
