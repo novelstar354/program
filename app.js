@@ -737,21 +737,48 @@ function animateStarCanvasObject(
                 animation.startY;
 
 
-            if (value.direction === "right") {
-                animation.endX += amount;
-            }
+            if (
+    value.direction === "right" ||
+    value.direction === "left" ||
+    value.direction === "up" ||
+    value.direction === "down"
+) {
 
-            if (value.direction === "left") {
-                animation.endX -= amount;
-            }
+    if (value.direction === "right") {
+        animation.endX += amount;
+    }
 
-            if (value.direction === "down") {
-                animation.endY += amount;
-            }
+    if (value.direction === "left") {
+        animation.endX -= amount;
+    }
 
-            if (value.direction === "up") {
-                animation.endY -= amount;
-            }
+    if (value.direction === "down") {
+        animation.endY += amount;
+    }
+
+    if (value.direction === "up") {
+        animation.endY -= amount;
+    }
+
+}
+else {
+
+    const angle =
+        Number(value.direction)
+        *
+        Math.PI / 180;
+
+
+    animation.endX +=
+        Math.cos(angle) *
+        amount;
+
+
+    animation.endY +=
+        Math.sin(angle) *
+        amount;
+
+}
 
 
             if (Array.isArray(object.points)) {
@@ -4045,7 +4072,7 @@ if (
 
 const canvasObjectAnimation =
     line.match(
-        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(move)\s+(right|left|up|down)\s+(\S+)(?:\s+(\S+))?$/
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+move\s+(right|left|up|down|-?\d+(?:\.\d+)?)\s+(\S+)(?:\s+(\S+))?$/
     );
 
 
@@ -4055,16 +4082,16 @@ if (canvasObjectAnimation) {
         canvasObjectAnimation[1];
 
     const direction =
-        canvasObjectAnimation[3];
+    canvasObjectAnimation[2];
 
-    const amount =
-        evalExpr(
-            canvasObjectAnimation[4],
-            vars
-        );
+const amount =
+    evalExpr(
+        canvasObjectAnimation[3],
+        vars
+    );
 
-    const duration =
-        canvasObjectAnimation[5];
+const duration =
+    canvasObjectAnimation[4];
 
 
     try {
