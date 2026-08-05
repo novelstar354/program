@@ -4066,6 +4066,274 @@ if (
 
     continue;
 }
+        /* =====================================================
+   Canvas Object Property Change
+===================================================== */
+
+const canvasObjectProperty =
+    line.match(
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+(position|size|fill|opacity|rotate|angle|type|points)\s+(.+)$/
+    );
+
+if (canvasObjectProperty) {
+
+    const objectName =
+        canvasObjectProperty[1];
+
+    const property =
+        canvasObjectProperty[2];
+
+    const valueText =
+        canvasObjectProperty[3].trim();
+
+    const object =
+        starCanvasObjects[objectName];
+
+    if (!object) {
+
+        runtimeError(
+            `Canvas object not found: ${objectName}`,
+            lineNumber,
+            line
+        );
+
+        continue;
+    }
+
+
+    /* =========================
+       position
+    ========================= */
+
+    if (property === "position") {
+
+        const args =
+            valueText
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (args.length !== 2) {
+
+            runtimeError(
+                "position requires x y",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        object.x =
+            Number(
+                evalExpr(
+                    args[0],
+                    vars
+                )
+            );
+
+        object.y =
+            Number(
+                evalExpr(
+                    args[1],
+                    vars
+                )
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       size
+    ========================= */
+
+    if (property === "size") {
+
+        const args =
+            valueText
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (args.length !== 2) {
+
+            runtimeError(
+                "size requires width height",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        object.width =
+            Number(
+                evalExpr(
+                    args[0],
+                    vars
+                )
+            );
+
+        object.height =
+            Number(
+                evalExpr(
+                    args[1],
+                    vars
+                )
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       fill
+    ========================= */
+
+    if (property === "fill") {
+
+        object.fill =
+            evalExpr(
+                valueText,
+                vars
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       opacity
+    ========================= */
+
+    if (property === "opacity") {
+
+        object.opacity =
+            Number(
+                evalExpr(
+                    valueText,
+                    vars
+                )
+            );
+
+        object.opacity =
+            Math.max(
+                0,
+                Math.min(
+                    1,
+                    object.opacity
+                )
+            );
+
+        continue;
+    }
+
+
+    /* =========================
+       rotate / angle
+    ========================= */
+
+    if (
+        property === "rotate" ||
+        property === "angle"
+    ) {
+
+        const angle =
+            Number(
+                evalExpr(
+                    valueText,
+                    vars
+                )
+            );
+
+        object.rotate =
+            angle;
+
+        object.angle =
+            angle;
+
+        continue;
+    }
+
+
+    /* =========================
+       type
+    ========================= */
+
+    if (property === "type") {
+
+        object.type =
+            String(
+                valueText
+            )
+            .replace(
+                /^["']|["']$/g,
+                ""
+            )
+            .toLowerCase();
+
+        continue;
+    }
+
+
+    /* =========================
+       points
+    ========================= */
+
+    if (property === "points") {
+
+        const args =
+            valueText
+                .split(/\s+/)
+                .filter(v => v);
+
+        if (
+            args.length < 6 ||
+            args.length % 2 !== 0
+        ) {
+
+            runtimeError(
+                "points requires x1 y1 x2 y2 ...",
+                lineNumber,
+                line
+            );
+
+            continue;
+        }
+
+        const points = [];
+
+        for (
+            let i = 0;
+            i < args.length;
+            i += 2
+        ) {
+
+            points.push([
+
+                Number(
+                    evalExpr(
+                        args[i],
+                        vars
+                    )
+                ),
+
+                Number(
+                    evalExpr(
+                        args[i + 1],
+                        vars
+                    )
+                )
+
+            ]);
+
+        }
+
+        object.points =
+            points;
+
+        continue;
+    }
+}
     /* =====================================================
    Canvas Object Animation
 ===================================================== */
@@ -4134,14 +4402,13 @@ const duration =
 
 
 /* =========================
-   rotate
+   Canvas Object Rotate
 ========================= */
 
 const canvasObjectRotate =
     line.match(
-        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+rotate\s+(.+?)(?:\s+(\S+))?$/
+        /^([a-zA-Z_][a-zA-Z0-9_]*)\s+rotate\s+(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s+(\d+(?:\.\d+)?)(ms|s|m))?$/
     );
-
 
 if (canvasObjectRotate) {
 
@@ -4149,13 +4416,22 @@ if (canvasObjectRotate) {
         canvasObjectRotate[1];
 
     const angle =
-        evalExpr(
-            canvasObjectRotate[2],
-            vars
+        Number(
+            canvasObjectRotate[2]
         );
 
-    const duration =
-        canvasObjectRotate[3];
+    let duration = null;
+
+    if (canvasObjectRotate[3]) {
+
+        duration =
+            canvasObjectRotate[3] +
+            (
+                canvasObjectRotate[4] ||
+                "ms"
+            );
+
+    }
 
 
     try {
@@ -4172,7 +4448,7 @@ if (canvasObjectRotate) {
 
             vars.time,
 
-            lineNumber
+            "rotate"
 
         );
 
@@ -4189,7 +4465,6 @@ if (canvasObjectRotate) {
 
     continue;
 }
-
 
 /* =========================
    fadein
