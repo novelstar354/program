@@ -715,7 +715,7 @@ canvas stroke "#ffffff"
 (線の色を設定)
 
 #canvas 図形
-canvas linewidth 5
+canvas lineWidth 5
 (線の太さの設定)
 canvas rect x y w h
 (四角形)
@@ -771,7 +771,7 @@ canvas stop
 object1 move 向き 距離
 (向きにはright,up,down,leftまたは角度が入ります。)
 
-object1 rotate 角度 全体にかかる時間
+object1 rotate 360 1s
 
 object1 fadein 1s
 object1 fadeout 1s
@@ -802,6 +802,7 @@ objectにできること
     collision: let hit = オブジェクト1 collision オブジェクト2でオブジェクト1とオブジェクト2が重なっているかを調べ、trueかfalseを返す。
 
 ※変数が使えます。
+※object property 値で再代入できます。
 
 #インポート
 import "config.star"
