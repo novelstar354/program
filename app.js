@@ -3136,8 +3136,13 @@ function saveFiles() {
 /* 新規作成 */
 function createFile() {
 
+    const promptText =
+        currentLanguage === "en"
+            ? "Enter file name"
+            : "ファイル名を入力";
+
     const name =
-        prompt("ファイル名を入力", "main.star");
+        prompt(promptText, "main.star");
 
     if (!name) return;
 
@@ -3149,7 +3154,8 @@ function createFile() {
 
     files.push(file);
     activeFile = file;
-if (!editor) return;
+
+    if (!editor) return;
 
     saveFiles();
     renderTabs();
@@ -7413,8 +7419,13 @@ if (newBtn) {
 
         saveCurrentFile();
 
+        const promptText =
+            currentLanguage === "en"
+                ? "File name"
+                : "ファイル名";
+
         const name =
-            prompt("ファイル名") || "new.star";
+            prompt(promptText) || "new.star";
 
         const file = {
             id: crypto.randomUUID(),
@@ -7432,6 +7443,7 @@ if (newBtn) {
         renderTree();
     };
 }
+
 
 clearBtn.onclick =
 clearConsole;
