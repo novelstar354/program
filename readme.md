@@ -2,9 +2,9 @@
 
 
 
-🌐 **Language / 言語**
+ **Language / 言語**
 
-[🇯🇵 日本語](README.md) | [🇺🇸 English](README_EN.md)
+[🇯🇵 日本語](github.com/novelstar354/program) | [🇺🇸 English](github.com/novelstar354/enstar)
 
 **STar** は、シンプルで分かりやすい構文を目指して開発されているプログラミング言語です。
 
