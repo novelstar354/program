@@ -768,10 +768,6 @@ canvas animate frame {
 canvas stop
 (アニメーションを停止させます。)
 
-#canvas 標準アニメーション
-object1 move 向き 距離
-(向きにはright,up,down,leftまたは角度が入ります。)
-
 object1 rotate 360 1s
 
 object1 fadein 1s
@@ -797,10 +793,13 @@ objectに入るプロパティ
     rotate: rotate 角度で回転を設定できる。
     
 objectにできること
-    draw: 描画
-    move: オブジェクト名 move 向き(right,left,up,down) 距離
+    draw: canvas object drawで描画
     distance: let d = オブジェクト1 distance オブジェクト2でオブジェクト1からオブジェクト2の中心座標の距離を取得
     collision: let hit = オブジェクト1 collision オブジェクト2でオブジェクト1とオブジェクト2が重なっているかを調べ、trueかfalseを返す。
+
+#canvas 標準アニメーション
+object1 move 向き 距離
+(向きにはright,up,down,leftまたは角度が入ります。)
 
 ※変数が使えます。
 ※object property 値で再代入できます。
@@ -1378,20 +1377,6 @@ canvas stop
 
 (Stops the animation.)
 
-
-# Canvas Standard Animation
-
-object1 move direction distance
-
-(direction can be right, up, down, left, or an angle.)
-
-object1 rotate 360 1s
-
-object1 fadein 1s
-
-object1 fadeout 1s
-
-
 # Canvas Object
 
 canvas object player{
@@ -1445,9 +1430,6 @@ Object operations
     draw:
         Draw the object.
 
-    move:
-        object name move direction distance
-
         direction:
         right
         left
@@ -1456,10 +1438,12 @@ Object operations
         or an angle
 
     distance:
+    　　let d = object1 distance object2
         Gets the distance between
         the centers of two objects.
 
     collision:
+        let hit = object1 collision object2
         Checks whether two objects
         overlap and returns true or false.
 
@@ -1468,6 +1452,17 @@ Object operations
 
 (Object properties can be reassigned.)
 
+# Canvas Standard Animation
+
+object1 move direction distance
+
+(direction can be right, up, down, left, or an angle.)
+
+object1 rotate 360 1s
+
+object1 fadein 1s
+
+object1 fadeout 1s
 
 # Import
 
