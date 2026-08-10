@@ -26,6 +26,638 @@ const mouseClicks = {
 
 let saveTimer = null;
 const classes = {};
+/* =====================================================
+   STar IDE Language
+===================================================== */
+
+let currentLanguage =
+    localStorage.getItem("star_language") || "ja";
+
+
+const starTranslations = {
+
+    ja: {
+        newFile: "＋ New File",
+        open: "開く",
+        save: "保存",
+        search: "検索",
+        replace: "置換",
+        replaceAll: "一括置換",
+        run: "▶ 実行",
+        shortcuts: "ショートカット",
+        help: "使い方",
+
+        explorer: "EXPLORER",
+        outline: "OUTLINE",
+        classes: "▶ Classes",
+        variables: "▶ Variables",
+        arrays: "▶ Arrays",
+        constants: "▶ Constants",
+        functions: "▶ Functions",
+
+        searchPlaceholder: "検索...",
+        replacePlaceholder: "置換...",
+        previousSearch: "前を検索",
+        nextSearch: "次を検索",
+        resultCount: "0 件",
+
+        caseSensitive: "大文字/小文字",
+        wholeWord: "単語単位",
+        regex: "正規表現",
+
+        console: "Console",
+        autoScroll: "自動スクロール",
+        clear: "Clear",
+
+        helpTitle: "STar Guide",
+        helpSearch: "ヘルプを検索...",
+
+        searchSection: "検索・置換",
+        fileSection: "ファイル",
+        runSection: "▶ 実行",
+        editSection: "編集",
+        lineSection: "行操作",
+
+        find: "検索",
+        replaceAction: "置換",
+        nextResult: "次の検索結果",
+        previousResult: "前の検索結果",
+        closePanel: "パネルを閉じる",
+
+        saveAction: "保存",
+        newFile: "新規ファイル",
+        closeFile: "ファイルを閉じる",
+
+        runProgram: "プログラム実行",
+
+        undo: "元に戻す",
+        redo: "やり直す",
+        copy: "コピー",
+        cut: "切り取り",
+        paste: "貼り付け",
+        selectAll: "すべて選択",
+        toggleComment: "コメント切り替え",
+        goToLine: "指定行へ移動",
+
+        deleteLine: "行を削除",
+        moveLineUp: "行を上へ移動",
+        moveLineDown: "行を下へ移動",
+        duplicateLineUp: "行を上へ複製",
+        duplicateLineDown: "行を下へ複製"
+    },
+
+
+    en: {
+        newFile: "＋ New File",
+        open: "Open",
+        save: "Save",
+        search: "Search",
+        replace: "Replace",
+        replaceAll: "Replace All",
+        run: "▶ Run",
+        shortcuts: "Shortcuts",
+        help: "Help",
+
+        explorer: "EXPLORER",
+        outline: "OUTLINE",
+        classes: "▶ Classes",
+        variables: "▶ Variables",
+        arrays: "▶ Arrays",
+        constants: "▶ Constants",
+        functions: "▶ Functions",
+
+        searchPlaceholder: "Search...",
+        replacePlaceholder: "Replace...",
+        previousSearch: "Find Previous",
+        nextSearch: "Find Next",
+        resultCount: "0 results",
+
+        caseSensitive: "Case Sensitive",
+        wholeWord: "Whole Word",
+        regex: "Regular Expression",
+
+        console: "Console",
+        autoScroll: "Auto Scroll",
+        clear: "Clear",
+
+        helpTitle: "STar Guide",
+        helpSearch: "Search help...",
+
+        searchSection: "Search & Replace",
+        fileSection: "File",
+        runSection: "▶ Run",
+        editSection: "Edit",
+        lineSection: "Line",
+
+        find: "Search",
+        replaceAction: "Replace",
+        nextResult: "Next Result",
+        previousResult: "Previous Result",
+        closePanel: "Close Panel",
+
+        saveAction: "Save",
+        newFile: "New File",
+        closeFile: "Close File",
+
+        runProgram: "Run Program",
+
+        undo: "Undo",
+        redo: "Redo",
+        copy: "Copy",
+        cut: "Cut",
+        paste: "Paste",
+        selectAll: "Select All",
+        toggleComment: "Toggle Comment",
+        goToLine: "Go to Line",
+
+        deleteLine: "Delete Line",
+        moveLineUp: "Move Line Up",
+        moveLineDown: "Move Line Down",
+        duplicateLineUp: "Duplicate Line Up",
+        duplicateLineDown: "Duplicate Line Down"
+    }
+
+};
+
+
+function t(key) {
+
+    return (
+        starTranslations[currentLanguage]?.[key] ??
+        starTranslations.ja[key] ??
+        key
+    );
+
+}
+
+
+function setLanguage(language) {
+
+    if (
+        language !== "ja" &&
+        language !== "en"
+    ) {
+        language = "ja";
+    }
+
+    currentLanguage = language;
+
+    localStorage.setItem(
+        "star_language",
+        language
+    );
+
+    applyLanguage();
+
+}
+
+document
+    .querySelectorAll("[data-i18n]")
+    .forEach(element => {
+
+        const key =
+            element.dataset.i18n;
+
+        if (starTranslations[currentLanguage]?.[key]) {
+            element.textContent =
+                t(key);
+        }
+
+    });
+
+function toggleLanguage() {
+
+    setLanguage(
+        currentLanguage === "ja"
+            ? "en"
+            : "ja"
+    );
+
+}
+
+
+function applyLanguage() {
+
+    document.documentElement.lang =
+        currentLanguage === "en"
+            ? "en"
+            : "ja";
+
+
+    /* =========================
+       Toolbar
+    ========================= */
+
+    const setText = (id, key) => {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.textContent = t(key);
+        }
+
+    };
+
+
+    setText("newFileBtn", "newFile");
+    setText("openFileBtn", "open");
+    setText("saveFileBtn", "save");
+    setText("searchBtn", "search");
+    setText("replaceBtnTop", "replace");
+    setText("replaceAllBtnTop", "replaceAll");
+    setText("runBtn", "run");
+    setText("shortcutBtn", "shortcuts");
+    setText("helpBtn", "help");
+
+
+    /* =========================
+       Sidebar
+    ========================= */
+
+    const sidebarHeaders =
+        document.querySelectorAll(
+            ".sidebar-header"
+        );
+
+    if (sidebarHeaders[0]) {
+        sidebarHeaders[0].textContent =
+            t("explorer");
+    }
+
+    if (sidebarHeaders[1]) {
+        sidebarHeaders[1].textContent =
+            t("outline");
+    }
+
+
+    const outlineTitles =
+        document.querySelectorAll(
+            ".outlineTitle"
+        );
+
+    if (outlineTitles[0])
+        outlineTitles[0].textContent =
+            t("classes");
+
+    if (outlineTitles[1])
+        outlineTitles[1].textContent =
+            t("variables");
+
+    if (outlineTitles[2])
+        outlineTitles[2].textContent =
+            t("arrays");
+
+    if (outlineTitles[3])
+        outlineTitles[3].textContent =
+            t("constants");
+
+    if (outlineTitles[4])
+        outlineTitles[4].textContent =
+            t("functions");
+
+
+    /* =========================
+       Search
+    ========================= */
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    if (searchInput) {
+        searchInput.placeholder =
+            t("searchPlaceholder");
+    }
+
+
+    const replaceInput =
+        document.getElementById(
+            "replaceInput"
+        );
+
+    if (replaceInput) {
+        replaceInput.placeholder =
+            t("replacePlaceholder");
+    }
+
+
+    const findPrevBtn =
+        document.getElementById(
+            "findPrevBtn"
+        );
+
+    if (findPrevBtn) {
+        findPrevBtn.title =
+            t("previousSearch");
+    }
+
+
+    const findNextBtn =
+        document.getElementById(
+            "findNextBtn"
+        );
+
+    if (findNextBtn) {
+        findNextBtn.title =
+            t("nextSearch");
+    }
+
+
+    const searchCount =
+        document.getElementById(
+            "searchCount"
+        );
+
+    if (
+        searchCount &&
+        !searchCount.dataset.dynamic
+    ) {
+        searchCount.textContent =
+            t("resultCount");
+    }
+
+
+    const caseSensitive =
+        document.getElementById(
+            "caseSensitive"
+        );
+
+    if (caseSensitive?.parentElement) {
+        caseSensitive.parentElement.lastChild.textContent =
+            " " + t("caseSensitive");
+    }
+
+
+    const wholeWord =
+        document.getElementById(
+            "wholeWord"
+        );
+
+    if (wholeWord?.parentElement) {
+        wholeWord.parentElement.lastChild.textContent =
+            " " + t("wholeWord");
+    }
+
+
+    const regexSearch =
+        document.getElementById(
+            "regexSearch"
+        );
+
+    if (regexSearch?.parentElement) {
+        regexSearch.parentElement.lastChild.textContent =
+            " " + t("regex");
+    }
+
+
+    /* =========================
+       Console
+    ========================= */
+
+    const consoleHeader =
+        document.querySelector(
+            "#consoleHeader > span"
+        );
+
+    if (consoleHeader) {
+        consoleHeader.textContent =
+            t("console");
+    }
+
+
+    const autoScroll =
+        document.querySelector(
+            ".consoleCheck"
+        );
+
+    if (autoScroll) {
+
+        const checkbox =
+            autoScroll.querySelector(
+                "input"
+            );
+
+        autoScroll.textContent =
+            "";
+
+        if (checkbox) {
+            autoScroll.appendChild(
+                checkbox
+            );
+        }
+
+        autoScroll.appendChild(
+            document.createTextNode(
+                " " + t("autoScroll")
+            )
+        );
+
+    }
+
+
+    setText(
+        "clearConsoleBtn",
+        "clear"
+    );
+
+
+    /* =========================
+       Help
+    ========================= */
+
+    const helpTitle =
+        document.querySelector(
+            "#helpHeader h2"
+        );
+
+    if (helpTitle) {
+        helpTitle.textContent =
+            t("helpTitle");
+    }
+
+
+    const helpSearch =
+        document.getElementById(
+            "helpSearch"
+        );
+
+    if (helpSearch) {
+        helpSearch.placeholder =
+            t("helpSearch");
+    }
+
+
+    /* =========================
+       Shortcut
+    ========================= */
+
+    const shortcutSections =
+        document.querySelectorAll(
+            ".shortcutSection"
+        );
+
+    if (shortcutSections[0]) {
+
+        const title =
+            shortcutSections[0].querySelector(
+                "h3"
+            );
+
+        if (title)
+            title.textContent =
+                t("searchSection");
+
+    }
+
+
+    if (shortcutSections[1]) {
+
+        const title =
+            shortcutSections[1].querySelector(
+                "h3"
+            );
+
+        if (title)
+            title.textContent =
+                t("fileSection");
+
+    }
+
+
+    if (shortcutSections[2]) {
+
+        const title =
+            shortcutSections[2].querySelector(
+                "h3"
+            );
+
+        if (title)
+            title.textContent =
+                t("runSection");
+
+    }
+
+
+    if (shortcutSections[3]) {
+
+        const title =
+            shortcutSections[3].querySelector(
+                "h3"
+            );
+
+        if (title)
+            title.textContent =
+                t("editSection");
+
+    }
+
+
+    if (shortcutSections[4]) {
+
+        const title =
+            shortcutSections[4].querySelector(
+                "h3"
+            );
+
+        if (title)
+            title.textContent =
+                t("lineSection");
+
+    }
+
+
+    /* =========================
+       Language button
+    ========================= */
+
+    const languageBtn =
+        document.getElementById(
+            "languageBtn"
+        );
+
+    if (languageBtn) {
+
+        languageBtn.textContent =
+            currentLanguage === "ja"
+                ? "🇺🇸 English"
+                : "🇯🇵 日本語";
+
+    }
+    /* =========================
+       Help Content
+    ========================= */
+
+    const helpJa =
+        document.getElementById("help-ja");
+
+    const helpEn =
+        document.getElementById("help-en");
+
+    if (helpJa && helpEn) {
+
+        if (currentLanguage === "en") {
+
+            helpJa.style.display = "none";
+            helpEn.style.display = "";
+
+        } else {
+
+            helpJa.style.display = "";
+            helpEn.style.display = "none";
+
+        }
+
+    }
+
+
+    /* =========================
+       Shortcut
+    ========================= */
+
+    applyShortcutLanguage();
+
+applyShortcutLanguage();
+}
+
+function applyShortcutLanguage() {
+
+    document
+        .querySelectorAll("#shortcutPanel [data-ja][data-en]")
+        .forEach(element => {
+
+            element.textContent =
+                currentLanguage === "en"
+                    ? element.dataset.en
+                    : element.dataset.ja;
+
+        });
+
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const languageBtn =
+            document.getElementById(
+                "languageBtn"
+            );
+
+        if (languageBtn) {
+
+            languageBtn.addEventListener(
+                "click",
+                toggleLanguage
+            );
+
+        }
+
+        applyLanguage();
+
+    }
+);
 
 /* =====================================================
    STar Canvas
@@ -2196,40 +2828,139 @@ setTimeout(() => {
 MONACO
 ===================================================== */
 function initHelp() {
-    const helpBtn = document.getElementById("helpBtn");
-    const helpPanel = document.getElementById("helpPanel");
-    const closeHelp = document.getElementById("closeHelp");
-    const helpSearch = document.getElementById("helpSearch");
-    const helpContent = document.querySelector("#helpContent pre");
 
-    if (!helpBtn || !helpPanel || !closeHelp || !helpSearch || !helpContent) {
-        console.warn("help UI not found");
+    const helpBtn =
+        document.getElementById("helpBtn");
+
+    const helpPanel =
+        document.getElementById("helpPanel");
+
+    const closeHelp =
+        document.getElementById("closeHelp");
+
+    const helpSearch =
+        document.getElementById("helpSearch");
+
+    const helpJa =
+        document.getElementById("help-ja");
+
+    const helpEn =
+        document.getElementById("help-en");
+
+
+    if (
+        !helpBtn ||
+        !helpPanel ||
+        !closeHelp ||
+        !helpSearch ||
+        !helpJa ||
+        !helpEn
+    ) {
+        console.warn(
+            "help UI not found"
+        );
+
         return;
     }
 
-    const originalText = helpContent.textContent;
 
-    helpBtn.onclick = () => helpPanel.classList.add("open");
-    closeHelp.onclick = () => helpPanel.classList.remove("open");
+    const originalJa =
+        helpJa.textContent;
 
-    helpSearch.addEventListener("input", () => {
-        const keyword = helpSearch.value.trim().toLowerCase();
+    const originalEn =
+        helpEn.textContent;
+
+
+    helpBtn.onclick = () => {
+
+        helpPanel.classList.add("open");
+
+        applyHelpSearch();
+
+    };
+
+
+    closeHelp.onclick = () => {
+
+        helpPanel.classList.remove("open");
+
+    };
+
+
+    function applyHelpSearch() {
+
+        const keyword =
+            helpSearch.value
+                .trim()
+                .toLowerCase();
+
+
+        const content =
+            currentLanguage === "en"
+                ? helpEn
+                : helpJa;
+
+
+        const original =
+            currentLanguage === "en"
+                ? originalEn
+                : originalJa;
+
 
         if (!keyword) {
-            helpContent.innerHTML =
-                escapeHtml(originalText).replace(/\n/g, "<br>");
+
+            content.textContent =
+                original;
+
             return;
+
         }
 
-        const lines = originalText.split("\n");
 
-        helpContent.innerHTML = lines.map(line => {
-            return line.toLowerCase().includes(keyword)
-                ? `<span class="searchHit">${escapeHtml(line)}</span>`
-                : escapeHtml(line);
-        }).join("<br>");
-    });
+        const lines =
+            original.split("\n");
+
+
+        content.innerHTML =
+            lines
+                .map(line => {
+
+                    if (
+                        line
+                            .toLowerCase()
+                            .includes(keyword)
+                    ) {
+
+                        return `
+                            <span class="searchHit">
+                                ${escapeHtml(line)}
+                            </span>
+                        `;
+
+                    }
+
+                    return escapeHtml(line);
+
+                })
+                .join("<br>");
+
+
+    }
+
+
+    helpSearch.addEventListener(
+        "input",
+        applyHelpSearch
+    );
+
+
+    window.addEventListener(
+        "star-language-changed",
+        applyHelpSearch
+    );
+
 }
+
 
 window.addEventListener("load", initHelp);
 
