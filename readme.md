@@ -4,7 +4,7 @@
 
  **Language / 言語**
 
-[🇯🇵 日本語](https://github.com/novelstar354/program/wiki/Japanese-readme.md) | [🇺🇸 English](https://github.com/novelstar354/enstar)
+[🇯🇵 日本語](https://github.com/novelstar354/program/wiki/Japanese-readme.md) | [🇺🇸 English](https://github.com/novelstar354/program/wiki/English-readme.md)
 
 **STar** は、シンプルで分かりやすい構文を目指して開発されているプログラミング言語です。
 
