@@ -316,6 +316,7 @@ STar Language v3.1.9
 ・マウス、キーボード
 ・例外処理
 ・canvas
+・同期処理
 ・クラス
 ・インポート
 
@@ -804,6 +805,13 @@ object1 move 向き 距離
 ※変数が使えます。
 ※object property 値で再代入できます。
 
+#同期処理
+background {
+    print("hello")
+}
+
+※常に実行します
+
 #インポート
 import "config.star"
 (関数、定数などすべてがインポートされます。)
@@ -835,6 +843,7 @@ Supported Features
 ・Mouse and Keyboard
 ・Exception Handling
 ・Canvas
+・background
 ・Classes
 ・Import
 
@@ -1148,6 +1157,11 @@ class player{
 
 let player = new player("Novel Star",100)
 
+#background
+background {
+    print ("hello")
+}
+※Always runnig
 
 # Input
 
@@ -1336,7 +1350,6 @@ canvas line x1 y1 x2 y2
 (Line)
 
 canvas arc x1 y1 x2 y2 0 180
-
 
 # Canvas Text
 
