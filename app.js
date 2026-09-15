@@ -2888,64 +2888,75 @@ function initHelp() {
 
 
     function applyHelpSearch() {
+    const keyword =
+        helpSearch.value
+            .trim()
+            .toLowerCase();
 
-        const keyword =
-            helpSearch.value
-                .trim()
-                .toLowerCase();
+    const content =
+        currentLanguage === "en"
+            ? helpEn
+            : helpJa;
 
+    const original =
+        currentLanguage === "en"
+            ? originalEn
+            : originalJa;
 
-        const content =
-            currentLanguage === "en"
-                ? helpEn
-                : helpJa;
-
-
-        const original =
-            currentLanguage === "en"
-                ? originalEn
-                : originalJa;
-
-
-        if (!keyword) {
-
-            content.textContent =
-                original;
-
-            return;
-
-        }
-
-
-        const lines =
-            original.split("\n");
-
-
-        content.innerHTML =
-            lines
-                .map(line => {
-
-                    if (
-                        line
-                            .toLowerCase()
-                            .includes(keyword)
-                    ) {
-
-                        return `
-                            <span class="searchHit">
-                                ${escapeHtml(line)}
-                            </span>
-                        `;
-
-                    }
-
-                    return escapeHtml(line);
-
-                })
-                .join("<br>");
-
-
+    // 検索文字が空なら元の文章に戻す
+    if (!keyword) {
+        content.textContent = original;
+        return;
     }
+
+    // HTMLを安全に扱う
+    const escapedKeyword = escapeHtml(keyword);
+
+    // 元の文章をHTMLとして作り直す
+    const lines = original.split("\n");
+
+    content.innerHTML = lines
+        .map(line => {
+            const lowerLine = line.toLowerCase();
+            let result = "";
+            let start = 0;
+
+            while (true) {
+                const index =
+                    lowerLine.indexOf(keyword, start);
+
+                // 見つからなかった
+                if (index === -1) {
+                    result += escapeHtml(
+                        line.slice(start)
+                    );
+                    break;
+                }
+
+                // 検索文字より前の部分
+                result += escapeHtml(
+                    line.slice(start, index)
+                );
+
+                // 検索文字だけをハイライト
+                result +=
+                    `<span class="searchHit">` +
+                    escapeHtml(
+                        line.slice(
+                            index,
+                            index + keyword.length
+                        )
+                    ) +
+                    `</span>`;
+
+                start =
+                    index + keyword.length;
+            }
+
+            return result;
+        })
+        .join("<br>");
+}
 
 
     helpSearch.addEventListener(
