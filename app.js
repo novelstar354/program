@@ -27,6 +27,22 @@ const mouseClicks = {
 let saveTimer = null;
 const classes = {};
 /* =====================================================
+   STar Background
+===================================================== */
+
+let starBackgroundTasks = [];
+let starBackgroundRunId = 0;
+
+function stopStarBackground() {
+    starBackgroundRunId++;
+
+    for (const task of starBackgroundTasks) {
+        task.running = false;
+    }
+
+    starBackgroundTasks = [];
+}
+/* =====================================================
    STar IDE Language
 ===================================================== */
 
@@ -5443,6 +5459,78 @@ if (line.startsWith("try")) {
 
     continue;
 }
+        /* =========================
+   background
+========================= */
+
+if (line === "background {") {
+
+    const result = getBlock(i + 1);
+
+    const task = {
+        running: true
+    };
+
+    const taskRunId = starBackgroundRunId;
+
+    starBackgroundTasks.push(task);
+
+    const backgroundVars = {
+        ...vars
+    };
+
+    (async () => {
+
+        while (
+            task.running &&
+            taskRunId === starBackgroundRunId
+        ) {
+
+            try {
+
+                await runSTar(
+                    result.block,
+                    backgroundVars,
+                    lineNumber
+                );
+
+            } catch (err) {
+
+                if (
+                    err &&
+                    typeof err === "object" &&
+                    err.lineNumber !== undefined
+                ) {
+                    logError(err);
+                } else {
+                    log(
+                        `[Background Error] ${
+                            err?.message ||
+                            String(err)
+                        }`
+                    );
+
+                    console.error(err);
+                }
+
+                task.running = false;
+                break;
+            }
+
+            /*
+             * waitが無いbackgroundでも
+             * ブラウザを固めないようにする
+             */
+            await new Promise(
+                resolve => setTimeout(resolve, 0)
+            );
+        }
+
+    })();
+
+    i = result.end;
+    continue;
+}
     /* =========================
    defer
 ========================= */
@@ -7378,7 +7466,8 @@ EVENTS
 runBtn.onclick = async () => {
 
     clearConsole();
-
+    stopStarBackground();
+    
     if (!editor) {
         log("Editor is not ready.");
         return;
